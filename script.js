@@ -1,13 +1,13 @@
 // import "./node_modules/@citation-js/core/lib-mjs/index.js"
-import {DataSet, Network} from "./node_modules/vis-network/standalone/esm/vis-network.js"
+import { DataSet, Network } from "./node_modules/vis-network/standalone/esm/vis-network.js"
 
 // import {parseBibFile} from "./node_modules/bibtex/index.js";
 
-import {Counter} from './Counter.js'
-import {TupleSet} from "./TupleSet.js";
-import {getPaperInfoFromDoi} from "./services/CitationService.js"
+import { Counter } from './Counter.js'
+import { TupleSet } from "./TupleSet.js";
+import { findPaper, getPaperInfoFromDoi } from "./services/CitationService.js"
 
-const Cite  = require(
+const Cite = require(
     ["citation-js"]
 );
 
@@ -29,10 +29,17 @@ var data = {
     nodes: nodes,
     edges: edges
 };
-var options = {
-    configure:{
-        enabled:true,
-        
+const OPTIONS = {
+    nodes: {
+        shape: 'box',
+        widthConstraint: {
+            maximum: 100
+        }
+    },
+    configure: {
+        enabled: false,
+
+
         container: document.getElementById("controls")
     },
     layout: {
@@ -42,12 +49,12 @@ var options = {
         }
     },
     groups: {
-        "unknown-ref": {color:{background:'lightgrey', border: "#eeeeee"}}
-      }
+        "unknown-ref": { color: { background: 'lightgrey', border: "#eeeeee" } }
+    }
 };
 
 // initialize your network!
-const network = new Network(container, data, options);
+const network = new Network(container, data, OPTIONS);
 
 
 const MIN_REFERENCES = 2
@@ -65,28 +72,32 @@ const fileUploaded = function () {
         return;
     }
     let reader = new FileReader();
-    
+
     const handleEvent = async e => {
-        if (e.type !== "load"){
+        if (e.type !== "load") {
             return;
         }
         let contents = reader.result;
         let parsedEntries = Cite.input(contents);
 
-        for (let entry of parsedEntries){
+        for (let entry of parsedEntries) {
             let paperInfo;
+            // might want to build all this logic into the Citation Service
             if (entry.DOI) {
                 paperInfo = await getPaperInfoFromDoi(entry.DOI);
             }
             else {
-                // TODO: handle papers with no doi
-                console.warn(`Paper "${entry.title}" missing DOI`)
-                continue;
+                paperInfo = await findPaper(entry);
+
+                if (!paperInfo) {
+                    console.warn(`Could not identify info for "${entry.title}"`)
+                    continue;
+                }
             }
             let papers_this_references = paperInfo["references"];
             for (let referenced_paper of papers_this_references) {
                 CITATION_EDGES.add([entry.DOI, referenced_paper["doi"]])
-            
+
 
                 if (!REGISTERED_DOIS.has(referenced_paper["doi"])) {
                     UNKOWN_PAPER_NAMES[referenced_paper["doi"]] = referenced_paper["title"]
@@ -106,36 +117,38 @@ const fileUploaded = function () {
             let new_dois = new Set((papers_this_references.concat(papers_which_cite_this).map(ref => ref["doi"])))
             reference_counter.update(new_dois)
 
-            try{
+            try {
                 nodes.add({
                     id: entry.DOI,
                     label: entry.title
                 });
             }
-            catch(ex) {
+            catch (ex) {
                 console.error(ex);
             }
 
-            
+
         }
 
         // TODO: only add papers with min numbers of edges
         let shared_refs = new Set(Object.keys(reference_counter.getResultsWithMin(MIN_REFERENCES)))
-        
+
         // set.difference is not yet available on most browsers so i have to delete one by one
-        for (let doi of REGISTERED_DOIS){
+        for (let doi of REGISTERED_DOIS) {
             shared_refs.delete(doi);
         }
-        
+
         for (let doi of shared_refs) {
-            nodes.add({id:doi, 
-                label:UNKOWN_PAPER_NAMES[doi], group:"unknown-ref"})
+            nodes.add({
+                id: doi,
+                label: UNKOWN_PAPER_NAMES[doi], group: "unknown-ref"
+            })
         }
 
         let filtered_edges = Array.from(CITATION_EDGES).filter(edge =>
             shared_refs.has(edge[0]) || shared_refs.has(edge[1])
         )
-        
+
         for (let tuple of filtered_edges) {
             const edgeData = {
                 from: tuple[0],
