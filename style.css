@@ -1,0 +1,21 @@
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+}
+
+#network {
+    border: 1px black solid;
+}
+
+#wrapper {
+    display: flex;
+    height: 90%;
+}
+
+#controls {
+    overflow: auto;
+}
+

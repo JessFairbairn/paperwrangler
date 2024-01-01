@@ -1,0 +1,16 @@
+{
+  "name": "paper-wrangler",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "GPL",
+  "dependencies": {
+    "citation-js": "^0.7.4",
+    "requirejs": "^2.3.6",
+    "vis-network": "^9.1.9"
+  }
+}
