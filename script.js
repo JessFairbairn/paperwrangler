@@ -57,7 +57,7 @@ const OPTIONS = {
 const network = new Network(container, data, OPTIONS);
 
 
-const MIN_REFERENCES = 2
+const MIN_REFERENCES = 1
 
 const REGISTERED_DOIS = new Set();
 const CITATION_EDGES = new TupleSet();
@@ -96,7 +96,7 @@ const fileUploaded = function () {
             }
             let papers_this_references = paperInfo["references"];
             for (let referenced_paper of papers_this_references) {
-                CITATION_EDGES.add([entry.DOI, referenced_paper["doi"]])
+                CITATION_EDGES.add([paperInfo.doi, referenced_paper["doi"]])
 
 
                 if (!REGISTERED_DOIS.has(referenced_paper["doi"])) {
@@ -107,7 +107,7 @@ const fileUploaded = function () {
             let papers_which_cite_this = paperInfo["citations"]
 
             for (let citing_paper of papers_which_cite_this) {
-                CITATION_EDGES.add([citing_paper["doi"], entry.DOI])
+                CITATION_EDGES.add([citing_paper["doi"], paperInfo.doi])
 
                 if (!REGISTERED_DOIS.has(citing_paper["doi"])) {
                     UNKOWN_PAPER_NAMES[citing_paper["doi"]] = citing_paper["title"]
@@ -119,7 +119,7 @@ const fileUploaded = function () {
 
             try {
                 nodes.add({
-                    id: entry.DOI,
+                    id: paperInfo.doi,
                     label: entry.title
                 });
             }
