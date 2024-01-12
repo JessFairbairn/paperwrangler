@@ -7,9 +7,7 @@ import { Counter } from './Counter.js'
 import { TupleSet } from "./TupleSet.js";
 import { findPaper, getPaperInfoFromDoi } from "./services/CitationService.js"
 
-const Cite = require(
-    ["citation-js"]
-);
+import  *  as astrocite from './node_modules/astrocite/lib/index.js';
 
 
 // create an array with nodes
@@ -78,7 +76,8 @@ const fileUploaded = function () {
             return;
         }
         let contents = reader.result;
-        let parsedEntries = Cite.input(contents);
+        let parsedEntries = parseBibtex(contents);
+        debugger;
 
         for (let entry of parsedEntries) {
             let paperInfo;
