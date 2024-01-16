@@ -1,3 +1,7 @@
+built
+
 node_modules
 *.bib
 *.ris
+dist/*.js
+dist/*.LICENSE.txt

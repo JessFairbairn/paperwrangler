@@ -1,13 +1,11 @@
-// import "./node_modules/@citation-js/core/lib-mjs/index.js"
-import { DataSet, Network } from "./node_modules/vis-network/standalone/esm/vis-network.js"
+import { DataSet, Network } from "vis-network/standalone"
 
-// import {parseBibFile} from "./node_modules/bibtex/index.js";
 
 import { Counter } from './Counter.js'
-import { TupleSet } from "./TupleSet.js";
+import { TupleSet } from "./TupleSet";
 import { findPaper, getPaperInfoFromDoi } from "./services/CitationService.js"
 
-import  *  as astrocite from './node_modules/astrocite/lib/index.js';
+import  *  as astrocite from 'astrocite';
 
 
 // create an array with nodes
@@ -20,7 +18,7 @@ const edges = new DataSet([
 
 // create a network
 const container = document.getElementById('network');
-const fileInput = document.getElementById('fileInput');
+const fileInput = document.getElementById('fileInput') as HTMLInputElement;
 
 // provide the data in the vis format
 var data = {
@@ -57,7 +55,7 @@ const network = new Network(container, data, OPTIONS);
 
 const MIN_REFERENCES = 1
 
-const REGISTERED_DOIS = new Set();
+const REGISTERED_DOIS = new Set<string>();
 const CITATION_EDGES = new TupleSet();
 const UNKOWN_PAPER_NAMES = {};
 const reference_counter = new Counter();
@@ -71,12 +69,12 @@ const fileUploaded = function () {
     }
     let reader = new FileReader();
 
-    const handleEvent = async e => {
+    const handleEvent = async (e: ProgressEvent) => {
         if (e.type !== "load") {
             return;
         }
-        let contents = reader.result;
-        let parsedEntries = parseBibtex(contents);
+        let contents = reader.result as string; //not great
+        let parsedEntries = astrocite.bibtex.parse(contents);
         debugger;
 
         for (let entry of parsedEntries) {
