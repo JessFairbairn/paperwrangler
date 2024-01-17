@@ -3,7 +3,7 @@ import { DataSet, Network } from "vis-network/standalone"
 
 import { Counter } from './Counter.js'
 import { TupleSet } from "./TupleSet";
-import { findPaper, getPaperInfoFromDoi } from "./services/CitationService.js"
+import { findPaper, getPaperInfoFromDoi } from "./services/CitationService"
 
 import  *  as astrocite from 'astrocite';
 
@@ -82,6 +82,11 @@ const fileUploaded = function () {
             // might want to build all this logic into the Citation Service
             if (entry.DOI) {
                 paperInfo = await getPaperInfoFromDoi(entry.DOI);
+                if (paperInfo === null) {
+                    //TODO: sort this
+                    console.warn(`Could not find paper with doi "${entry.DOI}"`)
+                    continue;
+                }
             }
             else {
                 paperInfo = await findPaper(entry);

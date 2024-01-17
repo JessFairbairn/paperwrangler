@@ -5,3 +5,5 @@ node_modules
 *.ris
 dist/*.js
 dist/*.LICENSE.txt
+*.js.map
+dist/main.js.map

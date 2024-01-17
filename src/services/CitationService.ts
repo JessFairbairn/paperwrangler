@@ -13,10 +13,21 @@ async function getPaperInfoFromDoi(doi) {
             doiCode = result[0];
         }
     }
-    let resp = await fetch(`https://api.semanticscholar.org/v1/paper/${doiCode}`)
+    try {
+        let resp = await fetch(`https://api.semanticscholar.org/v1/paper/${doiCode}`);
+        if (resp.status >= 400) {
+            //TODO: handle better
+            return null;
+        }
+        let json = await resp.json();
+        return json;
+    }
+    catch (ex) {
+        debugger;
+        console.error(ex);
+    }
 
-    let json = resp.json()
-    return json
+    
 }
 
 
