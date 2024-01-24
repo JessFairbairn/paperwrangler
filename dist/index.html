@@ -15,9 +15,18 @@
     </head>
     <body>
         <div id="wrapper">
-            <div id="network"></div>
-            <div id="controls"></div>
+            <div id="network-wrapper">
+                <div id="network"></div>
+                <button id="toggle-button">⋮</button>
+            </div>
+            <div id="controls">
+                <h1>Paper Wrangler</h1>
+                <!-- <fieldset> -->
+                    <input type="file" accept=".bib,.ris" id="fileInput"/>
+                    <p>Select a Bibtex, RIS or Endnote file</p>
+                <!-- </fieldset> -->
+                <div id="vis-controls"/>
+            </div>
         </div>
-        <input type="file" accept=".bib,.ris" id="fileInput"/>
     </body>
 </html>
