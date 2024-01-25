@@ -5,7 +5,11 @@ import { Counter } from './Counter.js'
 import { TupleSet } from "./TupleSet";
 import { findPaper, getPaperInfoFromDoi } from "./services/CitationService"
 
-import  *  as astrocite from 'astrocite';
+import * as astrocite from 'astrocite';
+
+const TOGGLE_CONTROLS_BUTTON = document.getElementById("toggle-button")
+TOGGLE_CONTROLS_BUTTON.onclick = () => 
+    document.getElementById("controls").classList.toggle("collapsed");
 
 
 // create an array with nodes
@@ -36,7 +40,7 @@ const OPTIONS = {
         enabled: false,
 
 
-        container: document.getElementById("controls")
+        container: document.getElementById("vis-controls")
     },
     layout: {
         hierarchical: {

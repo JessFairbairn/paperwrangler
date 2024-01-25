@@ -1,21 +1,54 @@
-html {
-    height: 100%;
+* {
+    box-sizing: border-box;
 }
 
-body {
+html, body {
+    width: 100%;
     height: 100%;
+    margin: 0;
 }
 
+#network-wrapper {
+    
+    position: relative;
+    padding: 0em;
+}
 #network {
-    border: 1px black solid;
+    height: 100%;
 }
 
 #wrapper {
     display: flex;
-    height: 90%;
+    height: 100%;
 }
 
 #controls {
     overflow: auto;
+    border-left: 1px black solid;
+    padding: 1em;
+
+    flex-shrink: 0;
 }
 
+#controls.collapsed {
+    width: 0;
+    padding:0;
+}
+
+#controls h1 {
+    margin-top:0;
+}
+
+#toggle-button {
+    cursor: pointer;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    z-index: 10000;
+    background: black;
+    color:white;
+    border: white solid 2px;
+    border-right: 0;
+    border-radius: 4px 0px 0px 4px;
+    height: 3em;
+}
