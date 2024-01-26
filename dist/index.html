@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Paper Wrangler</title>
         <script>var exports = {};</script>
 
@@ -24,6 +26,8 @@
                 <!-- <fieldset> -->
                     <input type="file" accept=".bib,.ris" id="fileInput"/>
                     <p>Select a Bibtex, RIS or Endnote file</p>
+                    <img src="assets/spinner.svg" id="loading-spinner" style="display:none;"/>
+                    <div id="error-message"></div>
                 <!-- </fieldset> -->
                 <div id="vis-controls"/>
             </div>
