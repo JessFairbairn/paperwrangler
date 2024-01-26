@@ -22,7 +22,7 @@ const edges = new DataSet([
 
 // create a network
 const container = document.getElementById('network');
-const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+const FILE_INPUT = document.getElementById('fileInput') as HTMLInputElement;
 
 // provide the data in the vis format
 var data = {
@@ -66,11 +66,15 @@ const reference_counter = new Counter();
 
 // set up file upload
 const fileUploaded = function () {
-    const curFiles = fileInput.files;
+    const curFiles = FILE_INPUT.files;
     if (curFiles.length === 0) {
         alert("No files currently selected for upload")
         return;
     }
+
+    const LOADING_ANIMATION = document.getElementById("loading-spinner");
+    LOADING_ANIMATION.style.display = "inline-block";
+
     let reader = new FileReader();
 
     const handleEvent = async (e: ProgressEvent) => {
@@ -79,27 +83,40 @@ const fileUploaded = function () {
         }
         let contents = reader.result as string; //not great
         let parsedEntries = astrocite.bibtex.parse(contents);
-        debugger;
 
         for (let entry of parsedEntries) {
             let paperInfo;
             // might want to build all this logic into the Citation Service
-            if (entry.DOI) {
-                paperInfo = await getPaperInfoFromDoi(entry.DOI);
-                if (paperInfo === null) {
-                    //TODO: sort this
-                    console.warn(`Could not find paper with doi "${entry.DOI}"`)
-                    continue;
-                }
-            }
-            else {
-                paperInfo = await findPaper(entry);
+            try{
+                if (entry.DOI) {
+                    paperInfo = await getPaperInfoFromDoi(entry.DOI);
+                    
 
-                if (!paperInfo) {
-                    console.warn(`Could not identify info for "${entry.title}"`)
-                    continue;
+                    if (paperInfo === null) {
+                        //TODO: sort this
+                        console.warn(`Could not find paper with doi "${entry.DOI}"`)
+                        continue;
+                    }
+                }
+                else {
+                    paperInfo = await findPaper(entry);
+
+                    if (!paperInfo) {
+                        console.warn(`Could not identify info for "${entry.title}"`)
+                        continue;
+                    }
                 }
             }
+            catch (ex) {
+                if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
+                    document.getElementById("error-message").innerText = 
+                        "A network error occurred while loading citation data.";
+                }
+                LOADING_ANIMATION.style.display = "none";
+                console.error(ex);
+                continue;
+            }
+
             let papers_this_references = paperInfo["references"];
             for (let referenced_paper of papers_this_references) {
                 CITATION_EDGES.add([paperInfo.doi, referenced_paper["doi"]])
@@ -133,7 +150,6 @@ const fileUploaded = function () {
                 console.error(ex);
             }
 
-
         }
 
         // TODO: only add papers with min numbers of edges
@@ -163,6 +179,8 @@ const fileUploaded = function () {
             // console.debug(edgeData)
             edges.add([edgeData])
         }
+        
+        LOADING_ANIMATION.style.display = "none";
     }
 
     reader.addEventListener("loadstart", handleEvent);
@@ -176,5 +194,5 @@ const fileUploaded = function () {
     }
 }
 
-fileInput.addEventListener("change", fileUploaded)
+FILE_INPUT.addEventListener("change", fileUploaded)
 

@@ -2,7 +2,7 @@
     "compilerOptions": {
       "outDir": "./built",
       "allowJs": true,
-      "target": "es2015",
+      "target": "ESNext",
       "module": "es2015",
       "moduleResolution": "Bundler",
     },

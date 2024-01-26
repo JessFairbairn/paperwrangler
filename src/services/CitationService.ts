@@ -13,19 +13,13 @@ async function getPaperInfoFromDoi(doi) {
             doiCode = result[0];
         }
     }
-    try {
-        let resp = await fetch(`https://api.semanticscholar.org/v1/paper/${doiCode}`);
-        if (resp.status >= 400) {
-            //TODO: handle better
-            return null;
-        }
-        let json = await resp.json();
-        return json;
+    let resp = await fetch(`https://api.semanticscholar.org/v1/paper/${doiCode}`);
+    if (resp.status >= 400) {
+        //TODO: handle better
+        return null;
     }
-    catch (ex) {
-        debugger;
-        console.error(ex);
-    }
+    let json = await resp.json();
+    return json;
 
     
 }
@@ -33,6 +27,7 @@ async function getPaperInfoFromDoi(doi) {
 
 async function findPaper(paperInfo) {
     let url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${paperInfo.title}&fields=title,authors`
+    
     let resp = await fetch(url);
     const candidates = (await resp.json()).data;
     for (let match of candidates) {
