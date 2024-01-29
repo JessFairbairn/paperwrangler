@@ -29,14 +29,19 @@ async function findPaper(paperInfo) {
     let url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${paperInfo.title}&fields=title,authors`
     
     let resp = await fetch(url);
-    const candidates = (await resp.json()).data;
+    const responseJson = await resp.json();
+    if (responseJson.total === 0) {
+        // No matches found
+        return null;
+    }
+    const candidates = responseJson.data;
     for (let match of candidates) {
         let authorName = paperInfo.author[0].given + " " + paperInfo.author[0].family;
         if (match.title.toLowerCase() === paperInfo.title.toLowerCase() && match.authors.map(author => author.name).includes(authorName)) {
             return await getPaperInfoFromDoi(match.paperId)
         }
     }
-
+    // None of the matches suggested by the API were close enough
     return null;
 }
 
