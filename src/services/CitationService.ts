@@ -1,3 +1,37 @@
+import { Data } from 'csl-json';
+
+async function processArray(paperList: Data[]) : Promise<any[]> {
+    let returnedList: any[] = [];
+
+    let [codesForLookup, remainingPapers] = partitionPapers(paperList);
+    debugger
+    for (let entry of remainingPapers) {
+        let paperInfo;
+        try {
+            paperInfo = await findPaper(entry);
+
+            if (!paperInfo) {
+                console.warn(`Could not identify info for "${entry.title}"`)
+                continue;
+            }
+            returnedList.push(paperInfo);
+        }        
+        catch (ex) {
+            if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
+                // assume it's a 429
+                // TODO: pass some sort of error message to the main script instead of 
+                //  writing to DOM here.
+                document.getElementById("error-message").innerText = 
+                    "You appear to be rate limited, some papers may be missing.";
+            } else {
+                throw new Error("An error occurred while loading paper", {cause:ex});
+            }
+        }
+    }
+
+    return returnedList;
+}
+
 async function getPaperInfoFromDoi(doi) {
     let doiCode;
     if (doi.startsWith(10)) {
@@ -45,4 +79,66 @@ async function findPaper(paperInfo) {
     return null;
 }
 
-export {findPaper, getPaperInfoFromDoi}
+
+function partitionPapers(paperList: Data[]) {
+    return paperList.reduce(
+        ([pass, fail], elem) => {
+            let code = findIdFromPaper(elem);
+            
+            if (code) {
+                debugger
+                return [[...pass, code], fail]; // just return the code
+            }
+            else {
+                debugger
+                return [pass, [...fail, elem]]; // return the whole object
+            }
+        }, 
+        [[], []]
+    );
+}
+
+function findIdFromPaper(paperInfo: Data): string | null {
+    if (paperInfo.DOI && paperInfo.DOI.startsWith("10")) {
+        return "DOI:" + paperInfo.DOI; 
+    }
+
+    const DOI_PATTERN = /(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'<>])\S)+)/i
+    let result = DOI_PATTERN.exec(paperInfo.URL)
+    if (result) {
+        return "DOI:" + result[0];
+    }
+    
+    //extract code from arxiv urls
+    const ARXIV_URL_PATTERN = /(?:(?:https?:\/\/)?arxiv\.org\/abs\/)(\S+)/i;
+    let arxiv_result = ARXIV_URL_PATTERN.exec(paperInfo.URL)
+    if (arxiv_result) {
+        return "ARXIV:" + arxiv_result[0];
+    }
+
+    // Check if it's in one of the websites semantic scholar supports
+    if (paperInfo.URL) {
+        debugger;
+        const SEMANTIC_SCHOLAR_KNOWS_URLS = [
+            "semanticscholar.org",
+            "arxiv.org",
+            "aclweb.org",
+            "acm.org",
+            "biorxiv.org"
+        ];
+        let paperUrl = new URL(paperInfo.URL);
+        let domainName = paperUrl.hostname.split(".").slice(-2).join(".");
+        if (SEMANTIC_SCHOLAR_KNOWS_URLS.includes(domainName)) {
+            return "URL:" + paperInfo.URL;
+        }
+    }
+    
+    // check for Google Scholar format arxiv referencing
+    if (paperInfo['container-title'] && paperInfo['container-title'].startsWith("arXiv preprint arXiv:")) {
+        return "ARXIV:" + paperInfo['container-title'].split(":")[1]
+    }
+
+    return null;
+}
+
+export {processArray}

@@ -1,4 +1,6 @@
 export class Counter {
+    _counts: {[x: string]: number};
+
     constructor() {
         this._counts = {};
     }
@@ -30,7 +32,7 @@ export class Counter {
         let itemList =  Object.keys(countDict).map(function(key) {
             return [key, countDict[key]];
         });
-
+        //@ts-expect-error
         itemList.sort((a, b) => a[1] - b[1]);
         
         itemList.reverse();
@@ -38,7 +40,7 @@ export class Counter {
         return itemList;
     }
 
-    getResultsWithMin(min=1) {
+    getResultsWithMin(min: number) {
         let filtered = Object.fromEntries(Object.entries(this._counts).filter(([k,v]) => v>=min));
         return filtered;
     }

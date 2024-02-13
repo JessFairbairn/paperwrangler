@@ -12,6 +12,7 @@
   "dependencies": {
     "astrocite": "^0.16.4",
     "citation-js": "^0.7.4",
+    "csl-json": "^0.1.0",
     "requirejs": "^2.3.6",
     "vis-network": "^9.1.9"
   },
