@@ -1,10 +1,15 @@
 import { Data } from 'csl-json';
 
-async function processArray(paperList: Data[]) : Promise<any[]> {
-    let returnedList: any[] = [];
+import { partitionArray } from '../PartitionArray';
+
+async function processArray(paperList: Data[]): Promise<void> {
 
     let [codesForLookup, remainingPapers] = partitionPapers(paperList);
-    debugger
+    let citationCounts = await bulkBareInfo(codesForLookup);
+    let [paperInfos, tooManyCitations] = await partitionArray(citationCounts, (paperInfo => paperInfo && paperInfo.citationCount < 1000))
+    //TODO: do something with tooManyCitations
+    let resp = await bulkRetrival(paperInfos.map(paper => paper.paperId));
+    postMessage({type:"results", body: resp});
     for (let entry of remainingPapers) {
         let paperInfo;
         try {
@@ -14,22 +19,23 @@ async function processArray(paperList: Data[]) : Promise<any[]> {
                 console.warn(`Could not identify info for "${entry.title}"`)
                 continue;
             }
-            returnedList.push(paperInfo);
+            postMessage({type:"results", body: [paperInfo]});
         }        
         catch (ex) {
             if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
                 // assume it's a 429
                 // TODO: pass some sort of error message to the main script instead of 
                 //  writing to DOM here.
-                document.getElementById("error-message").innerText = 
-                    "You appear to be rate limited, some papers may be missing.";
+                postMessage({
+                    type: "error",
+                    body: "You appear to be rate limited, some papers may be missing."
+                });
             } else {
                 throw new Error("An error occurred while loading paper", {cause:ex});
             }
         }
     }
-
-    return returnedList;
+    
 }
 
 async function getPaperInfoFromDoi(doi) {
@@ -141,4 +147,27 @@ function findIdFromPaper(paperInfo: Data): string | null {
     return null;
 }
 
-export {processArray}
+async function bulkRetrival(paperIds: string[]): Promise<any[]> {
+    let resp = await fetch(
+        "https://api.semanticscholar.org/graph/v1/paper/batch?fields=" +
+        "citations.title,citations.externalIds,references.title,references.externalIds,title,externalIds", 
+        {
+        method: "POST",
+        body: JSON.stringify({ids: paperIds})
+    });
+
+    return await resp.json();
+}
+
+async function bulkBareInfo(paperIds: string[]): Promise<any[]> {
+    let resp = await fetch("https://api.semanticscholar.org/graph/v1/paper/batch?fields=citationCount,referenceCount", {
+        method: "POST",
+        body: JSON.stringify({ids: paperIds})
+    });
+
+    return await resp.json();
+}
+
+onmessage = async function(ev) {
+    await processArray(ev.data)
+}

@@ -3,7 +3,7 @@ import { DataSet, Network } from "vis-network/standalone"
 
 import { Counter } from './Counter'
 import { TupleSet } from "./TupleSet";
-import { processArray } from "./services/CitationService"
+// import { processArray } from "./services/CitationService"
 
 import * as astrocite from 'astrocite';
 
@@ -11,6 +11,8 @@ const TOGGLE_CONTROLS_BUTTON = document.getElementById("toggle-button")
 TOGGLE_CONTROLS_BUTTON.onclick = () => 
     document.getElementById("controls").classList.toggle("collapsed");
 
+const CITATION_WORKER = new Worker(new URL('./services/CitationWorker.ts', import.meta.url));
+CITATION_WORKER.onmessage = workerCallback;
 
 // create an array with nodes
 const nodes = new DataSet([
@@ -57,7 +59,7 @@ const OPTIONS = {
 const network = new Network(container, data, OPTIONS);
 
 
-const MIN_REFERENCES = 7
+const MIN_REFERENCES = 5
 
 const REGISTERED_DOIS = new Set<string>();
 const CITATION_EDGES = new TupleSet();
@@ -84,10 +86,9 @@ const fileUploaded = function () {
         try {
             let contents = reader.result as string; //not great
             let parsedEntries = astrocite.bibtex.parse(contents);
-            let loadedPaperInfo: any[];
             
             try {
-                loadedPaperInfo = await processArray(parsedEntries);
+                CITATION_WORKER.postMessage(parsedEntries);
             }
             catch (ex) {
                 if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
@@ -101,78 +102,7 @@ const fileUploaded = function () {
                 LOADING_ANIMATION.style.display = "none";
             }
 
-            console.debug("Data loaded, rendering known papers");
-
-            for (let paperInfo of loadedPaperInfo) {
-                
-
-                let papers_this_references = paperInfo["references"];
-                for (let referenced_paper of papers_this_references) {
-                    CITATION_EDGES.add([paperInfo.doi, referenced_paper["doi"]])
-
-
-                    if (!REGISTERED_DOIS.has(referenced_paper["doi"])) {
-                        UNKOWN_PAPER_NAMES[referenced_paper["doi"]] = referenced_paper["title"]
-                    }
-                }
-
-                let papers_which_cite_this = paperInfo["citations"]
-
-                for (let citing_paper of papers_which_cite_this) {
-                    CITATION_EDGES.add([citing_paper["doi"], paperInfo.doi])
-
-                    if (!REGISTERED_DOIS.has(citing_paper["doi"])) {
-                        UNKOWN_PAPER_NAMES[citing_paper["doi"]] = citing_paper["title"]
-                    }
-                }
-
-                let new_dois = new Set((papers_this_references.concat(papers_which_cite_this).map(ref => ref["doi"])))
-                reference_counter.update(new_dois)
-
-                try {
-                    nodes.add({
-                        id: paperInfo.doi,
-                        label: paperInfo.title
-                    });
-                }
-                catch (ex) {
-                    console.error(ex);
-                }
-
-            }
-            console.debug("Rendering novel papers");
-            // TODO: only add papers with min numbers of edges
-            let shared_refs = new Set(Object.keys(reference_counter.getResultsWithMin(MIN_REFERENCES)))
-
-            // set.difference is not yet available on most browsers so i have to delete one by one
-            for (let doi of REGISTERED_DOIS) {
-                shared_refs.delete(doi);
-            }
-
-            for (let doi of shared_refs) {
-                try{
-                    nodes.add({
-                        id: doi,
-                        label: UNKOWN_PAPER_NAMES[doi], group: "unknown-ref"
-                    })
-                }
-                catch (ex) {
-                    console.error(ex);
-                }
-            }
-
-            let filtered_edges = Array.from(CITATION_EDGES).filter(edge =>
-                shared_refs.has(edge[0]) || shared_refs.has(edge[1])
-            )
-
-            for (let tuple of filtered_edges) {
-                const edgeData = {
-                    from: tuple[0],
-                    to: tuple[1]
-                };
-                // console.debug(edgeData)
-                edges.add([edgeData])
-            }
+            
         }
         catch (ex) {
             document.getElementById("error-message").innerText = 
@@ -197,3 +127,99 @@ const fileUploaded = function () {
 
 FILE_INPUT.addEventListener("change", fileUploaded)
 
+// functions
+
+console.debug("Data loaded, rendering known papers");
+
+function workerCallback(message: MessageEvent){
+    // message.progress
+
+    if (message.data.type === "results") {
+        renderResults(message.data.body);
+    } else if (message.type === "error") {
+        console.error(message.data.body);
+    }
+}
+
+function renderResults(loadedPaperInfo: any[]){
+    for (let paperInfo of loadedPaperInfo) {
+
+        let papers_this_references = paperInfo["references"];
+        for (let referenced_paper of papers_this_references) {
+            if (!referenced_paper.externalIds?.DOI ) {
+                console.debug("Skipping paper without doi", referenced_paper);
+                continue;
+            }
+            CITATION_EDGES.add([paperInfo["externalIds"]["DOI"], referenced_paper["externalIds"]["DOI"]])
+
+
+            if (!REGISTERED_DOIS.has(referenced_paper["externalIds"]["DOI"])) {
+                UNKOWN_PAPER_NAMES[["externalIds"]["DOI"]] = referenced_paper["title"]
+            }
+        }
+
+        let papers_which_cite_this = paperInfo["citations"]
+
+        for (let citing_paper of papers_which_cite_this) {
+            if (!citing_paper.externalIds?.DOI) {
+                continue;
+            }
+            CITATION_EDGES.add([citing_paper["externalIds"]["DOI"], paperInfo["externalIds"]["DOI"]])
+
+            if (!REGISTERED_DOIS.has(citing_paper["externalIds"]["DOI"])) {
+                UNKOWN_PAPER_NAMES[citing_paper["externalIds"]["DOI"]] = citing_paper["title"]
+            }
+        }
+
+        let new_dois = new Set(
+            papers_this_references.concat(papers_which_cite_this)
+                .filter(ref => ref.externalIds?.DOI)
+                .map(ref => ref["externalIds"]["DOI"])
+        );
+        reference_counter.update(new_dois)
+
+        try {
+            nodes.add({
+                id: paperInfo["externalIds"]["DOI"],
+                label: paperInfo.title
+            });
+        }
+        catch (ex) {
+            console.error(ex);
+        }
+
+    }
+    console.debug("Rendering novel papers");
+    // TODO: only add papers with min numbers of edges
+    let shared_refs = new Set(Object.keys(reference_counter.getResultsWithMin(MIN_REFERENCES)))
+
+    // set.difference is not yet available on most browsers so i have to delete one by one
+    for (let doi of REGISTERED_DOIS) {
+        shared_refs.delete(doi);
+    }
+
+    for (let doi of shared_refs) {
+        try{
+            nodes.add({
+                id: doi,
+                label: UNKOWN_PAPER_NAMES[doi], group: "unknown-ref"
+            })
+        }
+        catch (ex) {
+            console.error(ex);
+        }
+    }
+
+    let filtered_edges = Array.from(CITATION_EDGES).filter(edge =>
+        shared_refs.has(edge[0]) || shared_refs.has(edge[1])
+    )
+
+    for (let tuple of filtered_edges) {
+        const edgeData = {
+            from: tuple[0],
+            to: tuple[1]
+        };
+        // console.debug(edgeData)
+        edges.add([edgeData])
+    }
+}
