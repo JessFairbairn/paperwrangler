@@ -3,7 +3,7 @@ import { DataSet, Network } from "vis-network/standalone"
 
 import { Counter } from './Counter'
 import { TupleSet } from "./TupleSet";
-// import { processArray } from "./services/CitationService"
+import { WorkerMessage, WorkerMessageType } from "./classes/WorkerMessage"
 
 import * as astrocite from 'astrocite';
 
@@ -131,12 +131,11 @@ FILE_INPUT.addEventListener("change", fileUploaded)
 
 console.debug("Data loaded, rendering known papers");
 
-function workerCallback(message: MessageEvent){
-    // message.progress
+function workerCallback(message: MessageEvent<WorkerMessage>){
 
-    if (message.data.type === "results") {
-        renderResults(message.data.body);
-    } else if (message.type === "error") {
+    if (message.data.type === WorkerMessageType.Results) {
+        renderResults(message.data.body as any[]);
+    } else if (message.data.type === WorkerMessageType.Error) {
         console.error(message.data.body);
     }
 }

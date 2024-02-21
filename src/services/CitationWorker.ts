@@ -1,6 +1,7 @@
 import { Data } from 'csl-json';
 
 import { partitionArray } from '../PartitionArray';
+import { WorkerMessage } from "../classes/WorkerMessage"
 
 async function processArray(paperList: Data[]): Promise<void> {
 
@@ -9,7 +10,7 @@ async function processArray(paperList: Data[]): Promise<void> {
     let [paperInfos, tooManyCitations] = await partitionArray(citationCounts, (paperInfo => paperInfo && paperInfo.citationCount < 1000))
     //TODO: do something with tooManyCitations
     let resp = await bulkRetrival(paperInfos.map(paper => paper.paperId));
-    postMessage({type:"results", body: resp});
+    postMessage({type:"results", body: resp} as WorkerMessage);
     for (let entry of remainingPapers) {
         let paperInfo;
         try {
@@ -19,7 +20,7 @@ async function processArray(paperList: Data[]): Promise<void> {
                 console.warn(`Could not identify info for "${entry.title}"`)
                 continue;
             }
-            postMessage({type:"results", body: [paperInfo]});
+            postMessage({type:"results", body: [paperInfo]} as WorkerMessage);
         }        
         catch (ex) {
             if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
@@ -29,7 +30,7 @@ async function processArray(paperList: Data[]): Promise<void> {
                 postMessage({
                     type: "error",
                     body: "You appear to be rate limited, some papers may be missing."
-                });
+                } as WorkerMessage);
             } else {
                 throw new Error("An error occurred while loading paper", {cause:ex});
             }
