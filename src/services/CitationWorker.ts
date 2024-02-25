@@ -2,6 +2,7 @@ import { Data } from 'csl-json';
 
 import { partitionArray } from '../PartitionArray';
 import { WorkerMessage } from "../classes/WorkerMessage"
+import { Paper } from "../classes/SemanticScholarTypes"
 
 async function processArray(paperList: Data[]): Promise<void> {
 
@@ -11,10 +12,11 @@ async function processArray(paperList: Data[]): Promise<void> {
     //TODO: do something with tooManyCitations
     let resp = await bulkRetrival(paperInfos.map(paper => paper.paperId));
     postMessage({type:"results", body: resp} as WorkerMessage);
+
+    //Now get the rest:
     for (let entry of remainingPapers) {
-        let paperInfo;
         try {
-            paperInfo = await findPaper(entry);
+            let paperInfo = await findPaper(entry);
 
             if (!paperInfo) {
                 console.warn(`Could not identify info for "${entry.title}"`)
@@ -54,7 +56,7 @@ async function getPaperInfoFromDoi(doi) {
             doiCode = result[0];
         }
     }
-    let resp = await fetch(`https://api.semanticscholar.org/v1/paper/${doiCode}`);
+    let resp = await fetch(`https://api.semanticscholar.org/v1/paper/${doiCode}?fields=externalIds`);
     if (resp.status >= 400) {
         //TODO: handle better
         return null;
@@ -66,8 +68,8 @@ async function getPaperInfoFromDoi(doi) {
 }
 
 
-async function findPaper(paperInfo) {
-    let url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${paperInfo.title}&fields=title,authors`
+async function findPaper(paperInfo): Promise<Paper> {
+    let url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${paperInfo.title}&fields=title,authors,externalIds`
     
     let resp = await fetch(url);
     const responseJson = await resp.json();
@@ -87,7 +89,7 @@ async function findPaper(paperInfo) {
 }
 
 
-function partitionPapers(paperList: Data[]) {
+function partitionPapers(paperList: Data[]): [string[], Data[]] {
     return paperList.reduce(
         ([pass, fail], elem) => {
             let code = findIdFromPaper(elem);
@@ -101,7 +103,7 @@ function partitionPapers(paperList: Data[]) {
                 return [pass, [...fail, elem]]; // return the whole object
             }
         }, 
-        [[], []]
+        [[] as string[], [] as Data[]]
     );
 }
 
@@ -148,7 +150,7 @@ function findIdFromPaper(paperInfo: Data): string | null {
     return null;
 }
 
-async function bulkRetrival(paperIds: string[]): Promise<any[]> {
+async function bulkRetrival(paperIds: string[]): Promise<Paper[]> {
     let resp = await fetch(
         "https://api.semanticscholar.org/graph/v1/paper/batch?fields=" +
         "citations.title,citations.externalIds,references.title,references.externalIds,title,externalIds", 

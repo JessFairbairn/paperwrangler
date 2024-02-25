@@ -3,7 +3,8 @@ import { DataSet, Network } from "vis-network/standalone"
 
 import { Counter } from './Counter'
 import { TupleSet } from "./TupleSet";
-import { WorkerMessage, WorkerMessageType } from "./classes/WorkerMessage"
+import { WorkerMessage, WorkerMessageType } from "./classes/WorkerMessage";
+import { Paper } from "./classes/SemanticScholarTypes";
 
 import * as astrocite from 'astrocite';
 
@@ -134,13 +135,13 @@ console.debug("Data loaded, rendering known papers");
 function workerCallback(message: MessageEvent<WorkerMessage>){
 
     if (message.data.type === WorkerMessageType.Results) {
-        renderResults(message.data.body as any[]);
+        renderResults(message.data.body);
     } else if (message.data.type === WorkerMessageType.Error) {
         console.error(message.data.body);
     }
 }
 
-function renderResults(loadedPaperInfo: any[]){
+function renderResults(loadedPaperInfo: Array<Paper>){
     for (let paperInfo of loadedPaperInfo) {
 
         let papers_this_references = paperInfo["references"];
@@ -149,11 +150,11 @@ function renderResults(loadedPaperInfo: any[]){
                 console.debug("Skipping paper without doi", referenced_paper);
                 continue;
             }
-            CITATION_EDGES.add([paperInfo["externalIds"]["DOI"], referenced_paper["externalIds"]["DOI"]])
+            CITATION_EDGES.add([paperInfo.externalIds?.DOI, referenced_paper["externalIds"]["DOI"]])
 
 
             if (!REGISTERED_DOIS.has(referenced_paper["externalIds"]["DOI"])) {
-                UNKOWN_PAPER_NAMES[["externalIds"]["DOI"]] = referenced_paper["title"]
+                UNKOWN_PAPER_NAMES[referenced_paper["externalIds"]["DOI"]] = referenced_paper["title"]
             }
         }
 
