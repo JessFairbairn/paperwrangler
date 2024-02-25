@@ -67,6 +67,8 @@ const CITATION_EDGES = new TupleSet();
 const UNKOWN_PAPER_NAMES = {};
 const reference_counter = new Counter();
 
+const PROGRESS_BAR = document.getElementsByTagName("progress")[0];
+
 // set up file upload
 const fileUploaded = function () {
     const curFiles = FILE_INPUT.files;
@@ -77,6 +79,7 @@ const fileUploaded = function () {
 
     const LOADING_ANIMATION = document.getElementById("loading-spinner");
     LOADING_ANIMATION.style.display = "inline-block";
+    PROGRESS_BAR.style.display = "inline-block";
 
     let reader = new FileReader();
 
@@ -87,7 +90,8 @@ const fileUploaded = function () {
         try {
             let contents = reader.result as string; //not great
             let parsedEntries = astrocite.bibtex.parse(contents);
-            
+            PROGRESS_BAR.max = parsedEntries.length;
+            PROGRESS_BAR.value = 0;
             try {
                 CITATION_WORKER.postMessage(parsedEntries);
             }
@@ -111,8 +115,6 @@ const fileUploaded = function () {
 
             console.error(ex);
         }
-        
-        LOADING_ANIMATION.style.display = "none";
     }
 
     reader.addEventListener("loadstart", handleEvent);
@@ -135,13 +137,14 @@ console.debug("Data loaded, rendering known papers");
 function workerCallback(message: MessageEvent<WorkerMessage>){
 
     if (message.data.type === WorkerMessageType.Results) {
+        PROGRESS_BAR.value = message.data.progress;
         renderResults(message.data.body);
     } else if (message.data.type === WorkerMessageType.Error) {
         console.error(message.data.body);
     }
 }
 
-function renderResults(loadedPaperInfo: Array<Paper>){
+function renderResults(loadedPaperInfo: Array<Paper>) {
     for (let paperInfo of loadedPaperInfo) {
 
         let papers_this_references = paperInfo["references"];
@@ -154,11 +157,11 @@ function renderResults(loadedPaperInfo: Array<Paper>){
 
 
             if (!REGISTERED_DOIS.has(referenced_paper["externalIds"]["DOI"])) {
-                UNKOWN_PAPER_NAMES[referenced_paper["externalIds"]["DOI"]] = referenced_paper["title"]
+                UNKOWN_PAPER_NAMES[referenced_paper["externalIds"]["DOI"]] = referenced_paper["title"];
             }
         }
 
-        let papers_which_cite_this = paperInfo["citations"]
+        let papers_which_cite_this = paperInfo["citations"];
 
         for (let citing_paper of papers_which_cite_this) {
             if (!citing_paper.externalIds?.DOI) {

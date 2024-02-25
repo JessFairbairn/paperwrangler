@@ -5,13 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Paper Wrangler</title>
         <script>var exports = {};</script>
-
-        <!-- <script src="node_modules/requirejs/require.js"></script> -->
-        <!-- <script src="node_modules/astrocite/lib/index.js"></script>
-        <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-        <script src="node_modules/@devisle/reference-js/index.js"></script> -->
-        <!-- <script src="https://cdn.jsdelivr.net/npm/citation-js@0.4.0-8"></script> -->
-        <!-- <script src="" -->
         <script src="main.js" defer type="module"></script>
         <link href="style.css" rel="stylesheet"/>
     </head>
@@ -27,6 +20,7 @@
                     <input type="file" accept=".bib,.ris" id="fileInput"/>
                     <p>Select a Bibtex, RIS or Endnote file</p>
                     <img src="assets/spinner.svg" id="loading-spinner" style="display:none;"/>
+                    <progress style="display: none;"></progress>
                     <div id="error-message"></div>
                 <!-- </fieldset> -->
                 <div id="vis-controls"/>

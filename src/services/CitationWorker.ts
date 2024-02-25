@@ -5,16 +5,19 @@ import { WorkerMessage } from "../classes/WorkerMessage"
 import { Paper } from "../classes/SemanticScholarTypes"
 
 async function processArray(paperList: Data[]): Promise<void> {
-
+    let numberReturned = 0;
     let [codesForLookup, remainingPapers] = partitionPapers(paperList);
     let citationCounts = await bulkBareInfo(codesForLookup);
     let [paperInfos, tooManyCitations] = await partitionArray(citationCounts, (paperInfo => paperInfo && paperInfo.citationCount < 1000))
     //TODO: do something with tooManyCitations
     let resp = await bulkRetrival(paperInfos.map(paper => paper.paperId));
-    postMessage({type:"results", body: resp} as WorkerMessage);
+    postMessage({type:"results", body: resp, progress: paperInfos.length});
+    numberReturned = paperInfos.length + tooManyCitations.length;
+    postMessage({type: "error", body: "", progress: numberReturned} as WorkerMessage);
 
     //Now get the rest:
     for (let entry of remainingPapers) {
+        numberReturned++;
         try {
             let paperInfo = await findPaper(entry);
 
@@ -22,7 +25,7 @@ async function processArray(paperList: Data[]): Promise<void> {
                 console.warn(`Could not identify info for "${entry.title}"`)
                 continue;
             }
-            postMessage({type:"results", body: [paperInfo]} as WorkerMessage);
+            postMessage({type:"results", body: [paperInfo], progress: numberReturned} as WorkerMessage);
         }        
         catch (ex) {
             if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
@@ -31,7 +34,8 @@ async function processArray(paperList: Data[]): Promise<void> {
                 //  writing to DOM here.
                 postMessage({
                     type: "error",
-                    body: "You appear to be rate limited, some papers may be missing."
+                    body: "You appear to be rate limited, some papers may be missing.",
+                    progress: numberReturned
                 } as WorkerMessage);
             } else {
                 throw new Error("An error occurred while loading paper", {cause:ex});
