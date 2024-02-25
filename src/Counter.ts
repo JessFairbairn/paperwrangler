@@ -44,4 +44,18 @@ export class Counter {
         let filtered = Object.fromEntries(Object.entries(this._counts).filter(([k,v]) => v>=min));
         return filtered;
     }
+
+    getMaxCount() {
+        return 
+    }
+
+    getHistogram(): number[] {
+        let maxCount = Math.max(...Object.values(this._counts));
+
+        let histogramArray: number[] = [];
+        for (let i = 0; i <= maxCount; i++) {
+            histogramArray.push(Object.values(this._counts).filter(refCount => refCount === i).length);
+        }
+        return histogramArray;
+    }
 }

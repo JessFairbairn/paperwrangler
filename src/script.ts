@@ -65,7 +65,7 @@ const MIN_REFERENCES = 5
 const REGISTERED_DOIS = new Set<string>();
 const CITATION_EDGES = new TupleSet();
 const UNKOWN_PAPER_NAMES = {};
-const reference_counter = new Counter();
+const REFERENCE_COUNTER = new Counter();
 
 const PROGRESS_BAR = document.getElementsByTagName("progress")[0];
 
@@ -179,7 +179,7 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
                 .filter(ref => ref.externalIds?.DOI)
                 .map(ref => ref["externalIds"]["DOI"])
         );
-        reference_counter.update(new_dois)
+        REFERENCE_COUNTER.update(new_dois)
 
         try {
             nodes.add({
@@ -194,7 +194,7 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
     }
     console.debug("Rendering novel papers");
     // TODO: only add papers with min numbers of edges
-    let shared_refs = new Set(Object.keys(reference_counter.getResultsWithMin(MIN_REFERENCES)))
+    let shared_refs = new Set(Object.keys(REFERENCE_COUNTER.getResultsWithMin(MIN_REFERENCES)))
 
     // set.difference is not yet available on most browsers so i have to delete one by one
     for (let doi of REGISTERED_DOIS) {
@@ -225,4 +225,24 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
         // console.debug(edgeData)
         edges.add([edgeData])
     }
+
+    updateMinReferencesSlider();
+}
+
+function updateMinReferencesSlider(): void {
+    const MAX_ON_SCREEN = 1000;
+    const SLIDER = document.getElementById("min-references") as HTMLInputElement;
+    SLIDER.disabled = false;
+    let histogram = REFERENCE_COUNTER.getHistogram();
+    let max = histogram.length - 1;
+    SLIDER.max = max.toString();
+
+    let cumulativeCount = 0;
+    for (let i = max; i > 0; i--) {
+        cumulativeCount += histogram[i];
+        if (cumulativeCount > MAX_ON_SCREEN) {
+            SLIDER.min = (i+1).toString();
+        }
+    }
+    SLIDER.min = "1";
 }
