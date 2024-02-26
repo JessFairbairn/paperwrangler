@@ -99,11 +99,9 @@ function partitionPapers(paperList: Data[]): [string[], Data[]] {
             let code = findIdFromPaper(elem);
             
             if (code) {
-                debugger
                 return [[...pass, code], fail]; // just return the code
             }
             else {
-                debugger
                 return [pass, [...fail, elem]]; // return the whole object
             }
         }, 
@@ -131,7 +129,6 @@ function findIdFromPaper(paperInfo: Data): string | null {
 
     // Check if it's in one of the websites semantic scholar supports
     if (paperInfo.URL) {
-        debugger;
         const SEMANTIC_SCHOLAR_KNOWS_URLS = [
             "semanticscholar.org",
             "arxiv.org",

@@ -45,6 +45,11 @@ export class Counter {
         return filtered;
     }
 
+    getResultsInRange(min: number, max: number) {
+        let filtered = Object.fromEntries(Object.entries(this._counts).filter(([k,v]) => v>=min && v<=max));
+        return filtered;
+    }
+
     getMaxCount() {
         return 
     }

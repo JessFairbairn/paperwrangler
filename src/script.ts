@@ -64,20 +64,23 @@ const MIN_REFERENCES = 5
 
 const REGISTERED_DOIS = new Set<string>();
 const CITATION_EDGES = new TupleSet();
-const UNKOWN_PAPER_NAMES = {};
+const UNKNOWN_PAPER_NAMES = {};
 const REFERENCE_COUNTER = new Counter();
 
 const PROGRESS_BAR = document.getElementsByTagName("progress")[0];
+const SLIDER = document.getElementById("min-references") as HTMLInputElement;
+const LOADING_ANIMATION = document.getElementById("loading-spinner");
+
+let currentMinRefs = Infinity;
 
 // set up file upload
-const fileUploaded = function () {
+function fileUploaded() {
     const curFiles = FILE_INPUT.files;
     if (curFiles.length === 0) {
         alert("No files currently selected for upload")
         return;
     }
 
-    const LOADING_ANIMATION = document.getElementById("loading-spinner");
     LOADING_ANIMATION.style.display = "inline-block";
     PROGRESS_BAR.style.display = "inline-block";
 
@@ -147,43 +150,44 @@ function workerCallback(message: MessageEvent<WorkerMessage>){
 function renderResults(loadedPaperInfo: Array<Paper>) {
     for (let paperInfo of loadedPaperInfo) {
 
+        // Add references
         let papers_this_references = paperInfo["references"];
         for (let referenced_paper of papers_this_references) {
             if (!referenced_paper.externalIds?.DOI ) {
-                console.debug("Skipping paper without doi", referenced_paper);
                 continue;
             }
-            CITATION_EDGES.add([paperInfo.externalIds?.DOI, referenced_paper["externalIds"]["DOI"]])
+            CITATION_EDGES.add([paperInfo.externalIds?.DOI, referenced_paper.externalIds.DOI])
 
 
-            if (!REGISTERED_DOIS.has(referenced_paper["externalIds"]["DOI"])) {
-                UNKOWN_PAPER_NAMES[referenced_paper["externalIds"]["DOI"]] = referenced_paper["title"];
+            if (!REGISTERED_DOIS.has(referenced_paper.externalIds.DOI)) {
+                UNKNOWN_PAPER_NAMES[referenced_paper.externalIds.DOI] = referenced_paper.title;
             }
         }
 
+        // Add citations
         let papers_which_cite_this = paperInfo["citations"];
-
         for (let citing_paper of papers_which_cite_this) {
             if (!citing_paper.externalIds?.DOI) {
                 continue;
             }
-            CITATION_EDGES.add([citing_paper["externalIds"]["DOI"], paperInfo["externalIds"]["DOI"]])
+            CITATION_EDGES.add([citing_paper.externalIds.DOI, paperInfo.externalIds.DOI])
 
-            if (!REGISTERED_DOIS.has(citing_paper["externalIds"]["DOI"])) {
-                UNKOWN_PAPER_NAMES[citing_paper["externalIds"]["DOI"]] = citing_paper["title"]
+            if (!REGISTERED_DOIS.has(citing_paper.externalIds.DOI)) {
+                UNKNOWN_PAPER_NAMES[citing_paper.externalIds.DOI] = citing_paper.title
             }
         }
 
+        // Add all connected papers to reference counter
         let new_dois = new Set(
             papers_this_references.concat(papers_which_cite_this)
                 .filter(ref => ref.externalIds?.DOI)
-                .map(ref => ref["externalIds"]["DOI"])
+                .map(ref => ref.externalIds.DOI)
         );
         REFERENCE_COUNTER.update(new_dois)
 
         try {
             nodes.add({
-                id: paperInfo["externalIds"]["DOI"],
+                id: paperInfo.externalIds.DOI,
                 label: paperInfo.title
             });
         }
@@ -192,9 +196,22 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
         }
 
     }
-    console.debug("Rendering novel papers");
-    // TODO: only add papers with min numbers of edges
-    let shared_refs = new Set(Object.keys(REFERENCE_COUNTER.getResultsWithMin(MIN_REFERENCES)))
+    console.log("Rendering novel papers");
+
+    createNodesAndEdges(true);
+    network.fit();
+
+    updateMinReferencesSlider();
+}
+
+function createNodesAndEdges(rerender:boolean) {
+    let min_refs: number = Number.parseInt(SLIDER.value) || MIN_REFERENCES;
+    let shared_refs: Set<string>;
+    if (rerender) {
+        shared_refs = new Set(Object.keys(REFERENCE_COUNTER.getResultsWithMin(min_refs)));
+    } else {
+        shared_refs = new Set(Object.keys(REFERENCE_COUNTER.getResultsInRange(min_refs, currentMinRefs)));
+    }
 
     // set.difference is not yet available on most browsers so i have to delete one by one
     for (let doi of REGISTERED_DOIS) {
@@ -202,20 +219,19 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
     }
 
     for (let doi of shared_refs) {
-        try{
+        try {
             nodes.add({
                 id: doi,
-                label: UNKOWN_PAPER_NAMES[doi], group: "unknown-ref"
-            })
+                label: UNKNOWN_PAPER_NAMES[doi], group: "unknown-ref"
+            });
         }
         catch (ex) {
             console.error(ex);
         }
     }
 
-    let filtered_edges = Array.from(CITATION_EDGES).filter(edge =>
-        shared_refs.has(edge[0]) || shared_refs.has(edge[1])
-    )
+    let filtered_edges = Array.from(CITATION_EDGES).filter(edge => shared_refs.has(edge[0]) || shared_refs.has(edge[1])
+    );
 
     for (let tuple of filtered_edges) {
         const edgeData = {
@@ -223,15 +239,13 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
             to: tuple[1]
         };
         // console.debug(edgeData)
-        edges.add([edgeData])
+        edges.add([edgeData]);
     }
-
-    updateMinReferencesSlider();
 }
 
 function updateMinReferencesSlider(): void {
     const MAX_ON_SCREEN = 1000;
-    const SLIDER = document.getElementById("min-references") as HTMLInputElement;
+    
     SLIDER.disabled = false;
     let histogram = REFERENCE_COUNTER.getHistogram();
     let max = histogram.length - 1;
@@ -245,4 +259,21 @@ function updateMinReferencesSlider(): void {
         }
     }
     SLIDER.min = "1";
+}
+
+function minReferencesChange(ev: Event) {
+    SLIDER.readOnly = true;
+    createNodesAndEdges();
+
+    currentMinRefs = Number.parseInt((ev.target as HTMLInputElement).value);
+    SLIDER.readOnly = false;
+}
+
+SLIDER.onchange = minReferencesChange;
+
+CITATION_WORKER.onerror = function(error) {
+    LOADING_ANIMATION.style.display = "none";
+    document.getElementById("worker-errors").innerText = "An error which couldn't be handled happened";
+    console.log(`Worker error: ${error.message}`);
+    throw error;
 }
