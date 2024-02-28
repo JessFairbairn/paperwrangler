@@ -175,3 +175,7 @@ async function bulkBareInfo(paperIds: string[]): Promise<any[]> {
 onmessage = async function(ev) {
     await processArray(ev.data)
 }
+
+self.onunhandledrejection = function(error: PromiseRejectionEvent) {
+    throw error.reason;
+}

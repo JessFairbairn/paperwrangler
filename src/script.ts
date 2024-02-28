@@ -15,6 +15,12 @@ TOGGLE_CONTROLS_BUTTON.onclick = () =>
 const CITATION_WORKER = new Worker(new URL('./services/CitationWorker.ts', import.meta.url));
 CITATION_WORKER.onmessage = workerCallback;
 
+CITATION_WORKER.onerror = function(error: ErrorEvent) {
+    LOADING_ANIMATION.style.display = "none";
+    document.getElementById("error-message").innerText = "An error which couldn't be handled happened";
+    console.error(`Worker error: ${error.message}`);
+}
+
 // create an array with nodes
 const nodes = new DataSet([
 ]);
@@ -205,25 +211,37 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
 }
 
 function createNodesAndEdges(rerender:boolean) {
-    let min_refs: number = Number.parseInt(SLIDER.value) || MIN_REFERENCES;
+    let newMinRefs: number = Number.parseInt(SLIDER.value) || MIN_REFERENCES;
     let shared_refs: Set<string>;
+    let increase = (newMinRefs > currentMinRefs) ;
     if (rerender) {
-        shared_refs = new Set(Object.keys(REFERENCE_COUNTER.getResultsWithMin(min_refs)));
+        shared_refs = new Set(Object.keys(REFERENCE_COUNTER.getResultsWithMin(newMinRefs)));
     } else {
-        shared_refs = new Set(Object.keys(REFERENCE_COUNTER.getResultsInRange(min_refs, currentMinRefs)));
+        shared_refs = new Set(Object.keys(REFERENCE_COUNTER.getResultsInRange(
+            Math.min(newMinRefs, currentMinRefs),
+            Math.max(newMinRefs, currentMinRefs),
+        )));
     }
 
     // set.difference is not yet available on most browsers so i have to delete one by one
+    //TODO: do we need this? is this in the right place?
     for (let doi of REGISTERED_DOIS) {
         shared_refs.delete(doi);
     }
 
     for (let doi of shared_refs) {
         try {
-            nodes.add({
-                id: doi,
-                label: UNKNOWN_PAPER_NAMES[doi], group: "unknown-ref"
-            });
+            if (increase) {
+                nodes.remove({
+                    id: doi,
+                    label: UNKNOWN_PAPER_NAMES[doi], group: "unknown-ref"
+                });
+            } else {
+                nodes.add({
+                    id: doi,
+                    label: UNKNOWN_PAPER_NAMES[doi], group: "unknown-ref"
+                });
+            }
         }
         catch (ex) {
             console.error(ex);
@@ -238,8 +256,12 @@ function createNodesAndEdges(rerender:boolean) {
             from: tuple[0],
             to: tuple[1]
         };
-        // console.debug(edgeData)
-        edges.add([edgeData]);
+        
+        if (increase) {
+            edges.remove([edgeData]);
+        } else {
+            edges.add([edgeData]);
+        }
     }
 }
 
@@ -263,17 +285,10 @@ function updateMinReferencesSlider(): void {
 
 function minReferencesChange(ev: Event) {
     SLIDER.readOnly = true;
-    createNodesAndEdges();
+    createNodesAndEdges(false);
 
     currentMinRefs = Number.parseInt((ev.target as HTMLInputElement).value);
     SLIDER.readOnly = false;
 }
 
 SLIDER.onchange = minReferencesChange;
-
-CITATION_WORKER.onerror = function(error) {
-    LOADING_ANIMATION.style.display = "none";
-    document.getElementById("worker-errors").innerText = "An error which couldn't be handled happened";
-    console.log(`Worker error: ${error.message}`);
-    throw error;
-}
