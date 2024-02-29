@@ -25,8 +25,14 @@
                 <!-- </fieldset> -->
                 <label for="min-references">Minimum references to display paper:</label><br/>
                 <input type="range" id="min-references" disabled/>
+                <button id="warning-btn">Show Warnings</button>
                 <div id="vis-controls"/>
             </div>
+            <dialog >
+                <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
+                Warnings
+                <ul id="warning-list"></ul>
+            </dialog>
         </div>
     </body>
 </html>

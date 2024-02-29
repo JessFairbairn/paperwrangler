@@ -80,7 +80,8 @@ const LOADING_ANIMATION = document.getElementById("loading-spinner");
 let currentMinRefs = Infinity;
 
 // set up file upload
-function fileUploaded() {
+function fileSelectedCallback() {
+    document.getElementById("error-message").innerText = "";
     const curFiles = FILE_INPUT.files;
     if (curFiles.length === 0) {
         alert("No files currently selected for upload")
@@ -92,7 +93,7 @@ function fileUploaded() {
 
     let reader = new FileReader();
 
-    const handleEvent = async (e: ProgressEvent) => {
+    const fileReadCallback = async (e: ProgressEvent) => {
         if (e.type !== "load") {
             return;
         }
@@ -100,23 +101,8 @@ function fileUploaded() {
             let contents = reader.result as string; //not great
             let parsedEntries = astrocite.bibtex.parse(contents);
             PROGRESS_BAR.max = parsedEntries.length;
-            PROGRESS_BAR.value = 0;
-            try {
-                CITATION_WORKER.postMessage(parsedEntries);
-            }
-            catch (ex) {
-                if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
-                    document.getElementById("error-message").innerText = 
-                        "A network error occurred while loading citation data.";
-                } else {
-                    document.getElementById("error-message").innerText = 
-                        "An error the program couldn't handle occurred, sorry about that.";
-                }
-                console.error(ex);
-                LOADING_ANIMATION.style.display = "none";
-            }
-
-            
+            // PROGRESS_BAR.value = 0;
+            CITATION_WORKER.postMessage(parsedEntries);            
         }
         catch (ex) {
             document.getElementById("error-message").innerText = 
@@ -126,18 +112,18 @@ function fileUploaded() {
         }
     }
 
-    reader.addEventListener("loadstart", handleEvent);
-    reader.addEventListener("load", handleEvent);
-    reader.addEventListener("loadend", handleEvent);
-    reader.addEventListener("error", handleEvent);
-    reader.addEventListener("abort", handleEvent);
+    reader.addEventListener("loadstart", fileReadCallback);
+    reader.addEventListener("load", fileReadCallback);
+    reader.addEventListener("loadend", fileReadCallback);
+    reader.addEventListener("error", fileReadCallback);
+    reader.addEventListener("abort", fileReadCallback);
 
     for (const file of curFiles) {
         reader.readAsText(file);
     }
 }
 
-FILE_INPUT.addEventListener("change", fileUploaded)
+FILE_INPUT.addEventListener("change", fileSelectedCallback)
 
 // functions
 
@@ -149,7 +135,12 @@ function workerCallback(message: MessageEvent<WorkerMessage>){
         PROGRESS_BAR.value = message.data.progress;
         renderResults(message.data.body);
     } else if (message.data.type === WorkerMessageType.Error) {
+        document.getElementById("error-message").innerText = (message.data.body);
         console.error(message.data.body);
+    } else if (message.data.type === WorkerMessageType.Warning) {
+        let warningElement = new HTMLLIElement();
+        warningElement.innerText = message.data.body;
+        document.getElementById("warning-list").appendChild(warningElement);
     }
 }
 
@@ -292,3 +283,11 @@ function minReferencesChange(ev: Event) {
 }
 
 SLIDER.onchange = minReferencesChange;
+
+document.getElementById("warning-btn").onclick = () => {
+    document.getElementsByTagName("dialog")[0].show();
+};
+
+document.getElementById("close-warnings-btn").onclick = () => {
+    document.getElementsByTagName("dialog")[0].show();
+};

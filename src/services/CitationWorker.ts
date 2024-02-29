@@ -22,7 +22,11 @@ async function processArray(paperList: Data[]): Promise<void> {
             let paperInfo = await findPaper(entry);
 
             if (!paperInfo) {
-                console.warn(`Could not identify info for "${entry.title}"`)
+                postMessage({
+                    type:"warning", 
+                    body: `Could not identify info for "${entry.title}"`, 
+                    // progress: numberReturned
+                } as WorkerMessage);
                 continue;
             }
             postMessage({type:"results", body: [paperInfo], progress: numberReturned} as WorkerMessage);
@@ -60,7 +64,7 @@ async function getPaperInfoFromDoi(doi) {
             doiCode = result[0];
         }
     }
-    let resp = await fetch(`https://api.semanticscholar.org/v1/paper/${doiCode}?fields=externalIds`);
+    let resp = await fetchWithBackoff(`https://api.semanticscholar.org/v1/paper/${doiCode}?fields=externalIds`);
     if (resp.status >= 400) {
         //TODO: handle better
         return null;
@@ -75,7 +79,7 @@ async function getPaperInfoFromDoi(doi) {
 async function findPaper(paperInfo): Promise<Paper> {
     let url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${paperInfo.title}&fields=title,authors,externalIds`
     
-    let resp = await fetch(url);
+    let resp = await fetchWithBackoff(url);
     const responseJson = await resp.json();
     if (responseJson.total === 0) {
         // No matches found
@@ -152,7 +156,7 @@ function findIdFromPaper(paperInfo: Data): string | null {
 }
 
 async function bulkRetrival(paperIds: string[]): Promise<Paper[]> {
-    let resp = await fetch(
+    let resp = await fetchWithBackoff(
         "https://api.semanticscholar.org/graph/v1/paper/batch?fields=" +
         "citations.title,citations.externalIds,references.title,references.externalIds,title,externalIds", 
         {
@@ -164,7 +168,7 @@ async function bulkRetrival(paperIds: string[]): Promise<Paper[]> {
 }
 
 async function bulkBareInfo(paperIds: string[]): Promise<any[]> {
-    let resp = await fetch("https://api.semanticscholar.org/graph/v1/paper/batch?fields=citationCount,referenceCount", {
+    let resp = await fetchWithBackoff("https://api.semanticscholar.org/graph/v1/paper/batch?fields=citationCount,referenceCount", {
         method: "POST",
         body: JSON.stringify({ids: paperIds})
     });
@@ -179,3 +183,29 @@ onmessage = async function(ev) {
 self.onunhandledrejection = function(error: PromiseRejectionEvent) {
     throw error.reason;
 }
+
+async function fetchWithBackoff(resource:string|URL|Request, options:RequestInit=null, fuse=0){
+    try {
+        return await fetch(resource, options)
+    }
+    catch (ex) {
+        if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
+            // assume it's a 429
+            postMessage({
+                type: "error",
+                body: "You appear to be rate limited, loading will likely be slow."
+            } as WorkerMessage);
+            await delayPromise((fuse + 1)*5000);
+            return await fetchWithBackoff(resource, options, fuse+1)
+        } else {
+            throw new Error("An error occurred while loading paper", {cause:ex});
+        }
+    }
+}
+
+
+function delayPromise(millisec): Promise<any> { 
+    return new Promise(resolve => { 
+        setTimeout(() => resolve(''), millisec); 
+    }) 
+} 

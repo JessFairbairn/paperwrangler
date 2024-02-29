@@ -5,12 +5,13 @@ export type WorkerMessage = {
     body: Array<Paper>;
     progress: number;
 } | {
-    type: WorkerMessageType.Error;
+    type: WorkerMessageType.Error|WorkerMessageType.Warning;
     body: string;
     progress: number;
 }
 
 export enum WorkerMessageType {
     Results = "results",
-    Error = "error"
+    Error = "error",
+    Warning = "warning"
 }
