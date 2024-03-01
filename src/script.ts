@@ -138,7 +138,7 @@ function workerCallback(message: MessageEvent<WorkerMessage>){
         document.getElementById("error-message").innerText = (message.data.body);
         console.error(message.data.body);
     } else if (message.data.type === WorkerMessageType.Warning) {
-        let warningElement = new HTMLLIElement();
+        let warningElement = document.createElement("li");
         warningElement.innerText = message.data.body;
         document.getElementById("warning-list").appendChild(warningElement);
     }
@@ -289,5 +289,5 @@ document.getElementById("warning-btn").onclick = () => {
 };
 
 document.getElementById("close-warnings-btn").onclick = () => {
-    document.getElementsByTagName("dialog")[0].show();
+    document.getElementsByTagName("dialog")[0].close();
 };
