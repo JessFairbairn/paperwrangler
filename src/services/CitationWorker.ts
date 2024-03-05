@@ -3,30 +3,48 @@ import { Data } from 'csl-json';
 import { partitionArray } from '../PartitionArray';
 import { WorkerMessage } from "../classes/WorkerMessage"
 import { Paper } from "../classes/SemanticScholarTypes"
+import { fetchWithBackoff } from '../fetchWithBackoff';
+import { filterBySecondArray } from '../filterBySecondArray';
 
 async function processArray(paperList: Data[]): Promise<void> {
     let numberReturned = 0;
-    let [codesForLookup, remainingPapers] = partitionPapers(paperList);
-    let citationCounts = await bulkBareInfo(codesForLookup);
-    let [paperInfos, tooManyCitations] = await partitionArray(citationCounts, (paperInfo => paperInfo && paperInfo.citationCount < 1000))
-    //TODO: do something with tooManyCitations
-    let resp = await bulkRetrival(paperInfos.map(paper => paper.paperId));
-    postMessage({type:"results", body: resp, progress: paperInfos.length});
-    numberReturned = paperInfos.length + tooManyCitations.length;
-    postMessage({type: "error", body: "", progress: numberReturned} as WorkerMessage);
+
+    let paperCodes: string[] = paperList.map(paper => findIdFromPaper(paper));
+    let [papersWithCode, papersWithoutCodes] = filterBySecondArray(paperList, paperCodes);
+    paperCodes = paperCodes.filter(code => code);
+
+    // let [codesForLookup, remainingPapers] = partitionPapers(paperList);
+    let citationCounts = await bulkBareInfo(paperCodes);
+
+    let [_, papersWithInvalidCodes] = filterBySecondArray(papersWithCode, citationCounts);
+    papersWithInvalidCodes.forEach(paper =>{
+        postWarning(`${paper.title} has an invalid DOI or URL, check input file`)
+    });
+
+    let [papersToGetCitationsFor, tooManyCitations] = partitionArray(
+        citationCounts.filter(paperInfo => paperInfo), 
+        (paperInfo => paperInfo && paperInfo.citationCount < 1000)
+    );
+    if (tooManyCitations.length) {
+        postWarning(`${tooManyCitations.length} papers have more than 1000 citations, which will not be loaded`);
+    }
+
+    let resp = await bulkRetrival(papersToGetCitationsFor.map(paper => paper.paperId));
+    postMessage({type:"results", body: resp, progress: papersToGetCitationsFor.length});
+
+    let respWithoutCitations = await bulkRetrival(tooManyCitations.map(paper => paper.paperId), false);
+    numberReturned = papersToGetCitationsFor.length + tooManyCitations.length;
+    postMessage({type:"results", body: respWithoutCitations, progress: numberReturned});
 
     //Now get the rest:
-    for (let entry of remainingPapers) {
+    papersWithoutCodes.push(...papersWithInvalidCodes);
+    for (let entry of papersWithoutCodes) {
         numberReturned++;
         try {
             let paperInfo = await findPaper(entry);
 
             if (!paperInfo) {
-                postMessage({
-                    type:"warning", 
-                    body: `Could not identify info for "${entry.title}"`, 
-                    // progress: numberReturned
-                } as WorkerMessage);
+                postWarning(`Could not identify info for "${entry.title}"`);
                 continue;
             }
             postMessage({type:"results", body: [paperInfo], progress: numberReturned} as WorkerMessage);
@@ -155,10 +173,14 @@ function findIdFromPaper(paperInfo: Data): string | null {
     return null;
 }
 
-async function bulkRetrival(paperIds: string[]): Promise<Paper[]> {
+async function bulkRetrival(paperIds: string[], includeCitations=true): Promise<Paper[]> {
+    let url = "https://api.semanticscholar.org/graph/v1/paper/batch?fields=" +
+        "references.title,references.externalIds,title,externalIds";
+    if (includeCitations) {
+        url += ",citations.title,citations.externalIds"
+    }
     let resp = await fetchWithBackoff(
-        "https://api.semanticscholar.org/graph/v1/paper/batch?fields=" +
-        "citations.title,citations.externalIds,references.title,references.externalIds,title,externalIds", 
+        url, 
         {
         method: "POST",
         body: JSON.stringify({ids: paperIds})
@@ -184,28 +206,9 @@ self.onunhandledrejection = function(error: PromiseRejectionEvent) {
     throw error.reason;
 }
 
-async function fetchWithBackoff(resource:string|URL|Request, options:RequestInit=null, fuse=0){
-    try {
-        return await fetch(resource, options)
-    }
-    catch (ex) {
-        if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
-            // assume it's a 429
-            postMessage({
-                type: "error",
-                body: "You appear to be rate limited, loading will likely be slow."
-            } as WorkerMessage);
-            await delayPromise((fuse + 1)*5000);
-            return await fetchWithBackoff(resource, options, fuse+1)
-        } else {
-            throw new Error("An error occurred while loading paper", {cause:ex});
-        }
-    }
+function postWarning(body: string) {
+    postMessage({
+        type:"warning", 
+        body, 
+    } as WorkerMessage);
 }
-
-
-function delayPromise(millisec): Promise<any> { 
-    return new Promise(resolve => { 
-        setTimeout(() => resolve(''), millisec); 
-    }) 
-} 
