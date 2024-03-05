@@ -98,10 +98,15 @@ function fileSelectedCallback() {
             return;
         }
         try {
-            let contents = reader.result as string; //not great
+            let contents = reader.result as string;
             let parsedEntries = astrocite.bibtex.parse(contents);
             PROGRESS_BAR.max = parsedEntries.length;
-            // PROGRESS_BAR.value = 0;
+
+            // Register DOIs as soon as possible
+            parsedEntries.map(entry => entry.DOI).filter(Boolean).forEach(
+                entry => REGISTERED_DOIS.add(entry)
+            );
+
             CITATION_WORKER.postMessage(parsedEntries);            
         }
         catch (ex) {
@@ -147,6 +152,8 @@ function workerCallback(message: MessageEvent<WorkerMessage>){
 function renderResults(loadedPaperInfo: Array<Paper>) {
     for (let paperInfo of loadedPaperInfo) {
 
+        REGISTERED_DOIS.add(paperInfo.externalIds.DOI);
+
         // Add references
         let papers_this_references = paperInfo["references"];
         for (let referenced_paper of papers_this_references) {
@@ -162,8 +169,9 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
         }
 
         // Add citations
-        let papers_which_cite_this = paperInfo["citations"];
-        for (let citing_paper of papers_which_cite_this) {
+        let papersWhichCiteThis = paperInfo["citations"];
+        if (papersWhichCiteThis) {
+            for (let citing_paper of papersWhichCiteThis) {
             if (!citing_paper.externalIds?.DOI) {
                 continue;
             }
@@ -171,12 +179,13 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
 
             if (!REGISTERED_DOIS.has(citing_paper.externalIds.DOI)) {
                 UNKNOWN_PAPER_NAMES[citing_paper.externalIds.DOI] = citing_paper.title
+                }
             }
         }
 
         // Add all connected papers to reference counter
         let new_dois = new Set(
-            papers_this_references.concat(papers_which_cite_this)
+            papers_this_references.concat(papersWhichCiteThis)
                 .filter(ref => ref.externalIds?.DOI)
                 .map(ref => ref.externalIds.DOI)
         );
