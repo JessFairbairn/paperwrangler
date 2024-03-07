@@ -70,6 +70,7 @@ const MIN_REFERENCES = 5
 
 const REGISTERED_DOIS = new Set<string>();
 const CITATION_EDGES = new TupleSet();
+const KNOWN_CITATION_EDGES = new TupleSet();
 const UNKNOWN_PAPER_NAMES = {};
 const REFERENCE_COUNTER = new Counter();
 
@@ -160,7 +161,11 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
             if (!referenced_paper.externalIds?.DOI ) {
                 continue;
             }
-            CITATION_EDGES.add([paperInfo.externalIds?.DOI, referenced_paper.externalIds.DOI])
+            if (REGISTERED_DOIS.has(referenced_paper.externalIds.DOI)) {
+                KNOWN_CITATION_EDGES.add([paperInfo.externalIds?.DOI, referenced_paper.externalIds.DOI])
+            } else {
+                CITATION_EDGES.add([paperInfo.externalIds?.DOI, referenced_paper.externalIds.DOI])
+            }
 
 
             if (!REGISTERED_DOIS.has(referenced_paper.externalIds.DOI)) {
@@ -172,20 +177,25 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
         let papersWhichCiteThis = paperInfo["citations"];
         if (papersWhichCiteThis) {
             for (let citing_paper of papersWhichCiteThis) {
-            if (!citing_paper.externalIds?.DOI) {
-                continue;
-            }
-            CITATION_EDGES.add([citing_paper.externalIds.DOI, paperInfo.externalIds.DOI])
+                if (!citing_paper.externalIds?.DOI) {
+                    continue;
+                }
 
-            if (!REGISTERED_DOIS.has(citing_paper.externalIds.DOI)) {
-                UNKNOWN_PAPER_NAMES[citing_paper.externalIds.DOI] = citing_paper.title
+                if (REGISTERED_DOIS.has(citing_paper.externalIds.DOI)) {
+                    KNOWN_CITATION_EDGES.add([citing_paper.externalIds.DOI, paperInfo.externalIds.DOI])
+                } else {
+                    CITATION_EDGES.add([citing_paper.externalIds.DOI, paperInfo.externalIds.DOI])
+                }
+
+                if (!REGISTERED_DOIS.has(citing_paper.externalIds.DOI)) {
+                    UNKNOWN_PAPER_NAMES[citing_paper.externalIds.DOI] = citing_paper.title
                 }
             }
         }
 
         // Add all connected papers to reference counter
         let new_dois = new Set(
-            papers_this_references.concat(papersWhichCiteThis)
+            papers_this_references.concat(papersWhichCiteThis || [])
                 .filter(ref => ref.externalIds?.DOI)
                 .map(ref => ref.externalIds.DOI)
         );
@@ -203,8 +213,8 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
 
     }
     console.log("Rendering novel papers");
-
     createNodesAndEdges(true);
+    renderEdgesBetweenKnownNodes();
     network.fit();
 
     updateMinReferencesSlider();
@@ -248,9 +258,14 @@ function createNodesAndEdges(rerender:boolean) {
         }
     }
 
+    // TODO: currently doing this each time, inefficient
     let filtered_edges = Array.from(CITATION_EDGES).filter(edge => shared_refs.has(edge[0]) || shared_refs.has(edge[1])
     );
 
+    // filtered_edges.push(...Array.from(KNOWN_CITATION_EDGES));
+
+
+    //TODO: why are we removing things here? misleading and confusing function name, needs refactoring.
     for (let tuple of filtered_edges) {
         const edgeData = {
             from: tuple[0],
@@ -263,6 +278,22 @@ function createNodesAndEdges(rerender:boolean) {
             edges.add([edgeData]);
         }
     }
+    
+}
+
+function renderEdgesBetweenKnownNodes() {
+
+    let plop = Array.from(KNOWN_CITATION_EDGES);
+
+    for (let tuple of plop) {
+        const edgeData = {
+            from: tuple[0],
+            to: tuple[1]
+        };
+        
+        edges.add([edgeData]);
+    }
+    
 }
 
 function updateMinReferencesSlider(): void {
