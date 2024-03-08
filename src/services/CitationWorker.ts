@@ -67,7 +67,7 @@ async function processArray(paperList: Data[]): Promise<void> {
     
 }
 
-async function getPaperInfoFromDoi(doi) {
+async function getPaperInfoFromDoi(doi): Promise<Paper> {
     let doiCode;
     if (doi.startsWith(10)) {
         doiCode = doi; 
@@ -87,10 +87,13 @@ async function getPaperInfoFromDoi(doi) {
         //TODO: handle better
         return null;
     }
-    let json = await resp.json();
+    let json = await resp.json() as Paper;
+    if (json?.externalIds) {
+        console.warn("Huzzah! They've fixed this bug.")
+    } else {
+        json.externalIds = {DOI: json.doi};
+    }
     return json;
-
-    
 }
 
 
