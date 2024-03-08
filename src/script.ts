@@ -1,7 +1,7 @@
-import { DataSet, Network } from "vis-network/standalone"
+import { DataSet, Network, Options as NetworkOptions } from "vis-network/standalone";
 
 
-import { Counter } from './Counter'
+import { Counter } from './Counter';
 import { TupleSet } from "./TupleSet";
 import { WorkerMessage, WorkerMessageType } from "./classes/WorkerMessage";
 import { Paper } from "./classes/SemanticScholarTypes";
@@ -38,7 +38,7 @@ var data = {
     nodes: nodes,
     edges: edges
 };
-const OPTIONS = {
+const OPTIONS: NetworkOptions = {
     nodes: {
         shape: 'box',
         widthConstraint: {
@@ -58,7 +58,16 @@ const OPTIONS = {
         }
     },
     groups: {
-        "unknown-ref": { color: { background: 'lightgrey', border: "#eeeeee" } }
+        "unknown-ref": { 
+            color: { 
+                background: 'lightgrey', 
+                border: "#eeeeee",
+                highlight: {
+                    background: '#eee', 
+                    border: "#eeeeee",
+                }
+            }
+        }
     }
 };
 
