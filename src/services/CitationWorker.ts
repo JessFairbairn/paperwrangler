@@ -93,6 +93,9 @@ async function getPaperInfoFromDoi(doi): Promise<Paper> {
     } else {
         json.externalIds = {DOI: json.doi};
     }
+
+    json.citations.forEach(citation => citation.externalIds = {DOI: citation.doi});
+    json.references.forEach(reference => reference.externalIds = {DOI: reference.doi});
     return json;
 }
 
