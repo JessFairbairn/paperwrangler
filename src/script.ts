@@ -262,8 +262,6 @@ function createNodesAndEdges(rerender:boolean) {
     let filtered_edges = Array.from(CITATION_EDGES).filter(edge => shared_refs.has(edge[0]) || shared_refs.has(edge[1])
     );
 
-    // filtered_edges.push(...Array.from(KNOWN_CITATION_EDGES));
-
 
     //TODO: why are we removing things here? misleading and confusing function name, needs refactoring.
     for (let tuple of filtered_edges) {
@@ -297,7 +295,7 @@ function renderEdgesBetweenKnownNodes() {
 }
 
 function updateMinReferencesSlider(): void {
-    const MAX_ON_SCREEN = 1000;
+    const MAX_ON_SCREEN = 50;
     
     SLIDER.disabled = false;
     let histogram = REFERENCE_COUNTER.getHistogram();
@@ -311,7 +309,6 @@ function updateMinReferencesSlider(): void {
             SLIDER.min = (i+1).toString();
         }
     }
-    SLIDER.min = "1";
 }
 
 function minReferencesChange(ev: Event) {
