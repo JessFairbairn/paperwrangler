@@ -1,5 +1,6 @@
 * {
     box-sizing: border-box;
+    font-family: sans-serif;
 }
 
 html, body {
@@ -9,7 +10,7 @@ html, body {
 }
 
 #network-wrapper {
-    
+    flex-grow: 1;
     position: relative;
     padding: 0em;
 }
@@ -24,10 +25,11 @@ html, body {
 
 #controls {
     overflow: auto;
-    border-left: 1px black solid;
+    border-left: 1px #608999 solid;
     padding: 1em;
 
     flex-shrink: 0;
+    background-color: #cee5ee;
 }
 
 #controls.collapsed {
