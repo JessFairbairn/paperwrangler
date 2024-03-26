@@ -18,7 +18,7 @@ async function processArray(paperList: Data[]): Promise<void> {
 
     let [_, papersWithInvalidCodes] = filterBySecondArray(papersWithCode, citationCounts);
     papersWithInvalidCodes.forEach(paper =>{
-        postWarning(`${paper.title} has an invalid DOI or URL, check input file`)
+        postWarning(`${paper.title} has an invalid DOI or URL, check input file`);
     });
 
     let [papersToGetCitationsFor, tooManyCitations] = partitionArray(
@@ -112,8 +112,9 @@ async function findPaper(paperInfo): Promise<Paper> {
     const candidates = responseJson.data;
     for (let match of candidates) {
         let authorName = paperInfo.author[0].given + " " + paperInfo.author[0].family;
-        if (match.title.toLowerCase() === paperInfo.title.toLowerCase() && match.authors.map(author => author.name).includes(authorName)) {
-            return await getPaperInfoFromDoi(match.paperId)
+        let authorName2 = paperInfo.author[0].given[0] + ". " + paperInfo.author[0].family;
+        if (match.title.toLowerCase() === paperInfo.title.toLowerCase() && match.authors.some(author => [authorName,authorName2].includes(author.name))) {
+            return await getPaperInfoFromDoi(match.paperId);
         }
     }
     // None of the matches suggested by the API were close enough
@@ -180,6 +181,10 @@ function findIdFromPaper(paperInfo: Data): string | null {
 }
 
 async function bulkRetrival(paperIds: string[], includeCitations=true): Promise<Paper[]> {
+    if (paperIds.length === 0) {
+        return [];
+    }
+
     let url = "https://api.semanticscholar.org/graph/v1/paper/batch?fields=" +
         "references.title,references.externalIds,title,externalIds";
     if (includeCitations) {
@@ -196,6 +201,9 @@ async function bulkRetrival(paperIds: string[], includeCitations=true): Promise<
 }
 
 async function bulkBareInfo(paperIds: string[]): Promise<any[]> {
+    if (paperIds.length === 0) {
+        return [];
+    }
     let resp = await fetchWithBackoff("https://api.semanticscholar.org/graph/v1/paper/batch?fields=citationCount,referenceCount", {
         method: "POST",
         body: JSON.stringify({ids: paperIds})
