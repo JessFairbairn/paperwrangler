@@ -109,7 +109,20 @@ function fileSelectedCallback() {
         }
         try {
             let contents = reader.result as string;
-            let parsedEntries = astrocite.bibtex.parse(contents);
+            let fileExtension = file.name.split(".").slice(-1)[0];
+
+            let parsedEntries;
+            switch(fileExtension) {
+                case("ris"):
+                    parsedEntries = astrocite.ris.parse(contents);
+                    break;
+                case("bib"):
+                    parsedEntries = astrocite.bibtex.parse(contents);
+                    break;
+                default:
+                    throw new Error("Cannot identify file type");
+            }
+            
             PROGRESS_BAR.max = parsedEntries.length;
 
             // Register DOIs as soon as possible
@@ -133,9 +146,8 @@ function fileSelectedCallback() {
     reader.addEventListener("error", fileReadCallback);
     reader.addEventListener("abort", fileReadCallback);
 
-    for (const file of curFiles) {
-        reader.readAsText(file);
-    }
+    let file = curFiles[0]
+    reader.readAsText(file);
 }
 
 FILE_INPUT.addEventListener("change", fileSelectedCallback)
