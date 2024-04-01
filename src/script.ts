@@ -328,6 +328,7 @@ function updateMinReferencesSlider(): void {
         cumulativeCount += histogram[i];
         if (cumulativeCount > MAX_ON_SCREEN) {
             SLIDER.min = (i+1).toString();
+            break;
         }
     }
 }
