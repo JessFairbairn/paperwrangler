@@ -20,3 +20,11 @@ jobs:
 
       - name: Build for production
         run: npm run build-prod
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: |
+            dist
+            !dist/**/*.txt
