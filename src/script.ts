@@ -88,7 +88,7 @@ const SLIDER = document.getElementById("min-references") as HTMLInputElement;
 const LOADING_ANIMATION = document.getElementById("loading-spinner");
 
 let currentMinRefs = Infinity;
-
+let numIssues = 0;
 // set up file upload
 function fileSelectedCallback() {
     document.getElementById("error-message").innerText = "";
@@ -165,6 +165,10 @@ function workerCallback(message: MessageEvent<WorkerMessage>){
         document.getElementById("error-message").innerText = (message.data.body);
         console.error(message.data.body);
     } else if (message.data.type === WorkerMessageType.Warning) {
+        numIssues++;
+        Array.from(
+            document.getElementsByClassName("warning-number") as HTMLCollectionOf<HTMLSpanElement>
+        ).forEach(span => span.innerText = numIssues.toString() );
         let warningElement = document.createElement("li");
         warningElement.innerText = message.data.body;
         document.getElementById("warning-list").appendChild(warningElement);
