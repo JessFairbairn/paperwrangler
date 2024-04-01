@@ -233,7 +233,7 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
         }
 
     }
-    console.log("Rendering novel papers");
+    
     createNodesAndEdges(true);
     renderEdgesBetweenKnownNodes();
     network.fit();
