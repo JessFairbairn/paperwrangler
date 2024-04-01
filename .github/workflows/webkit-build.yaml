@@ -1,0 +1,22 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  deploy_to_firebase_hosting:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@master
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build for production
+        run: npm run build-prod

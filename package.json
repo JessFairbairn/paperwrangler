@@ -5,6 +5,7 @@
   "main": "index.html",
   "private": true,
   "scripts": {
+    "build-prod": "npx webpack --mode production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
