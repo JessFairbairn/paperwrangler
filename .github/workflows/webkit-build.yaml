@@ -8,9 +8,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout the repository
         uses: actions/checkout@main
@@ -22,12 +20,9 @@ jobs:
         run: npm run build-prod
 
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: dist
-          path: |
-            dist
-            !dist/**/*.txt
+          path: dist
   
   # Deploy job
   deploy:
@@ -41,7 +36,7 @@ jobs:
 
     # Deploy to the github-pages environment
     environment:
-      name: dist
+      name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     # Specify runner + deployment step
@@ -49,4 +44,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4 # or specific "vX.X.X" version tag for this action
+        uses: actions/deploy-pages@v4
