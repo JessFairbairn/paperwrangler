@@ -16,7 +16,7 @@ const CITATION_WORKER = new Worker(new URL('./services/CitationWorker.ts', impor
 CITATION_WORKER.onmessage = workerCallback;
 
 CITATION_WORKER.onerror = function(error: ErrorEvent) {
-    LOADING_ANIMATION.style.display = "none";
+    // LOADING_ANIMATION.style.display = "none";
     document.getElementById("error-message").innerText = "An error which couldn't be handled happened";
     console.error(`Worker error: ${error.message}`);
 }
@@ -98,7 +98,6 @@ function fileSelectedCallback() {
         return;
     }
 
-    LOADING_ANIMATION.style.display = "inline-block";
     PROGRESS_BAR.style.display = "inline-block";
 
     let reader = new FileReader();

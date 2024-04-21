@@ -16,15 +16,22 @@
             </div>
             <div id="controls">
                 <h1>Paper Wrangler</h1>
-                <!-- <fieldset> -->
+                <p>See how your field has developed through a web of citations</p>
+                <fieldset>
+                    <legend>Select a Bibtex or RIS file</legend>
                     <input type="file" accept=".bib,.ris" id="fileInput"/>
-                    <p>Select a Bibtex, RIS or Endnote file</p>
-                    <img src="assets/spinner.svg" id="loading-spinner" style="display:none;"/>
+                    <br/>
                     <progress style="display: none;"></progress>
                     <div id="error-message"></div>
+                </fieldset>
                 <!-- </fieldset> -->
-                <label for="min-references">Minimum references to display paper:</label><br/>
-                <input type="range" id="min-references" disabled/>
+                <!-- <hr/> -->
+                <fieldset>
+                    <legend for="min-references">Minimum references to display paper:</legend>
+                    <input type="range" id="min-references" disabled/>
+                    <img src="assets/spinner.svg" id="loading-spinner" style="display:none;"/>
+                    <br><em>Low values may slow performance</em>
+                </fieldset>
                 <button id="warning-btn">Show Issues (<span class="warning-number">0</span>)</button>
                 <div id="vis-controls"/>
             </div>
