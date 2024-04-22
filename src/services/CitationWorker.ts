@@ -50,18 +50,12 @@ async function processArray(paperList: Data[]): Promise<void> {
             postMessage({type:"results", body: [paperInfo], progress: numberReturned} as WorkerMessage);
         }        
         catch (ex) {
-            if (ex instanceof TypeError && ex.message.includes("NetworkError")) {
-                // assume it's a 429
-                // TODO: pass some sort of error message to the main script instead of 
-                //  writing to DOM here.
-                postMessage({
-                    type: "error",
-                    body: "You appear to be rate limited, some papers may be missing.",
-                    progress: numberReturned
-                } as WorkerMessage);
-            } else {
-                throw new Error("An error occurred while loading paper", {cause:ex});
-            }
+            // assume it's a 429
+            postMessage({
+                type: "error",
+                body: "You appear to be rate limited, loading may be slow.",
+                progress: numberReturned
+            } as WorkerMessage);
         }
     }
     
