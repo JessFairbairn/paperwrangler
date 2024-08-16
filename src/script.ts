@@ -6,7 +6,10 @@ import { TupleSet } from "./TupleSet";
 import { WorkerMessage, WorkerMessageType } from "./classes/WorkerMessage";
 import { Paper } from "./classes/SemanticScholarTypes";
 
+import { foo, getRequestToken } from "./services/IntegrationService"
+
 import * as astrocite from 'astrocite';
+import  OAuth from 'oauth-1.0a';
 
 const TOGGLE_CONTROLS_BUTTON = document.getElementById("toggle-button")
 TOGGLE_CONTROLS_BUTTON.onclick = () => 
@@ -353,3 +356,11 @@ document.getElementById("warning-btn").onclick = () => {
 document.getElementById("close-warnings-btn").onclick = () => {
     document.getElementsByTagName("dialog")[0].close();
 };
+
+document.getElementById("test").onclick = function(){
+    getRequestToken();
+}
+
+document.getElementById("test2").onclick = function(){
+    foo();
+}
