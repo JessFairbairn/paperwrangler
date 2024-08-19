@@ -365,8 +365,8 @@ document.getElementById("load_zotero").onclick = function(){
     zoteroLoadTest();
 }
 
-if (localStorage.getItem("zotero_oauth_token") && localStorage.getItem("zotero_oauth_secret")) {
-(document.getElementById("load_zotero") as HTMLButtonElement).disabled = false;
+if (localStorage.getItem("zotero_api_key")) {
+    (document.getElementById("load_zotero") as HTMLButtonElement).disabled = false;
 } else {
     (document.getElementById("load_zotero") as HTMLButtonElement).disabled = true;
 }

@@ -15,7 +15,7 @@ async function call(){
     // call step three on the API- requires token key, token secret and verifier
     let resp;
     try {
-        resp = await fetch(`${API_DOMAIN}/zotero/step3?token_key=${oauth_token}&token_secret=${oauth_request_secret}&verifier=${oauth_verifier}`);
+        resp = await fetch(`${API_DOMAIN}/zotero/authorise_token?token_key=${oauth_token}&token_secret=${oauth_request_secret}&verifier=${oauth_verifier}`);
     }
     catch (ex) {
         alert("Error connecting to consumer API")
@@ -29,8 +29,9 @@ async function call(){
     let token_data = await resp.json();
 
     sessionStorage.removeItem("zotero_request_secret");
-    localStorage.setItem("zotero_oauth_token", token_data.oauth_token);
-    localStorage.setItem("zotero_oauth_secret", token_data.oauth_token_secret);
+    localStorage.setItem("zotero_api_key", token_data.oauth_token);
+    localStorage.setItem("zotero_user_id", token_data.userID);
+    localStorage.setItem("zotero_username", token_data.username);
 
     window.location.replace('index.html')
 }
