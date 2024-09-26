@@ -31,7 +31,7 @@ export async function getRequestToken() {
     
 }
 
-export async function zoteroLoadTest(): Promise<Data[]> {
+export async function getAllPapersInZotero(): Promise<Data[]> {
     const USER_ID = localStorage.getItem("zotero_user_id");
     let resp: Response;
     try {

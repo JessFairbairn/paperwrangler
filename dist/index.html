@@ -17,8 +17,7 @@
             <div id="controls">
                 <h1>Paper Wrangler</h1>
                 <p>See how your field has developed through a web of citations</p>
-                <button id="test">Authorise Zotero</button>
-                <button id="import-btn">Import...</button>
+                <button id="import-btn">Import from Zotero...</button>
                 <fieldset>
                     <legend>Select a Bibtex or RIS file</legend>
                     <input type="file" accept=".bib,.ris" id="fileInput"/>
@@ -43,8 +42,11 @@
                 <ul id="warning-list"></ul>
             </dialog>
             <dialog id="import-dialog">
-                <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
-                <button id="load_zotero" disabled>Load Zotero Library</button>
+                <form method="dialog">
+                    <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
+                </form>
+                <button id="test">Authorise Zotero</button>
+                <button id="load_zotero" disabled>Load All Items from Zotero Library</button>
             </dialog>
         </div>
     </body>

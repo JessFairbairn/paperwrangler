@@ -6,7 +6,7 @@ import { TupleSet } from "./TupleSet";
 import { WorkerMessage, WorkerMessageType } from "./classes/WorkerMessage";
 import { Paper } from "./classes/SemanticScholarTypes";
 
-import { getRequestToken, zoteroLoadTest } from "./services/IntegrationService"
+import { getRequestToken, getAllPapersInZotero } from "./services/IntegrationService"
 
 import * as astrocite from 'astrocite';
 
@@ -371,8 +371,10 @@ document.getElementById("test").onclick = function(){
     getRequestToken();
 }
 
-document.getElementById("load_zotero").onclick = async function(){
-    processParsedEntries(await zoteroLoadTest());
+const LOAD_ALL_ZOTERO_PAPERS = document.getElementById("load_zotero") as HTMLButtonElement;
+LOAD_ALL_ZOTERO_PAPERS.onclick = async function(){
+    LOAD_ALL_ZOTERO_PAPERS.disabled = true;
+    processParsedEntries(await getAllPapersInZotero());
 }
 
 if (localStorage.getItem("zotero_api_key")) {
