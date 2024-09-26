@@ -1,3 +1,7 @@
+import { ZoteroApiCreator, ZoteroApiPaper, ZoteroApiResponse } from '../classes/ZoteroTypes'
+
+import { Data, Person } from 'csl-json';
+
 const API_DOMAIN = "http://127.0.0.1:5000";
 
 export async function getRequestToken() {
@@ -27,7 +31,7 @@ export async function getRequestToken() {
     
 }
 
-export async function zoteroLoadTest() {
+export async function zoteroLoadTest(): Promise<Data[]> {
     const USER_ID = localStorage.getItem("zotero_user_id");
     let resp: Response;
     try {
@@ -51,5 +55,30 @@ export async function zoteroLoadTest() {
         alert("Error code from OAuth consumer API- " + resp.statusText);
         return;
     }
-    console.table(await resp.json())
+    let results = await resp.json() as ZoteroApiResponse[];
+    let papers = results.map(result => result.data)
+    console.table(papers)
+
+    return papers.map(paper => zoteroPaperToCSL(paper))
+}
+
+function zoteroPaperToCSL(input: ZoteroApiPaper): Data {
+
+    function convertPerson(creator: ZoteroApiCreator): Person {
+        return {given: creator.firstName, family: creator.lastName}
+    }
+    const TYPE_MAP = {
+        "journalArticle": "article-journal",
+    }
+    let output: Data =  {
+        DOI :input.DOI,
+        title: input.title,
+        author: input.creators.map(convertPerson),
+        type: TYPE_MAP[input.itemType],
+        id: input.key,
+        URL: input.url,
+
+    }
+
+    return output;
 }

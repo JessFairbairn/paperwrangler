@@ -9,7 +9,6 @@ import { Paper } from "./classes/SemanticScholarTypes";
 import { getRequestToken, zoteroLoadTest } from "./services/IntegrationService"
 
 import * as astrocite from 'astrocite';
-import  OAuth from 'oauth-1.0a';
 
 const TOGGLE_CONTROLS_BUTTON = document.getElementById("toggle-button")
 TOGGLE_CONTROLS_BUTTON.onclick = () => 
@@ -86,9 +85,12 @@ const KNOWN_CITATION_EDGES = new TupleSet();
 const UNKNOWN_PAPER_NAMES = {};
 const REFERENCE_COUNTER = new Counter();
 
+// Some constant HTML elements that are there from the start
 const PROGRESS_BAR = document.getElementsByTagName("progress")[0];
 const SLIDER = document.getElementById("min-references") as HTMLInputElement;
 const LOADING_ANIMATION = document.getElementById("loading-spinner");
+const WARNINGS_DIALOG = document.getElementById("warnings-dialog") as HTMLDialogElement;
+const IMPORT_DIALOG = document.getElementById("import-dialog") as HTMLDialogElement;
 
 let currentMinRefs = Infinity;
 let numIssues = 0;
@@ -125,14 +127,7 @@ function fileSelectedCallback() {
                     throw new Error("Cannot identify file type");
             }
             
-            PROGRESS_BAR.max = parsedEntries.length;
-
-            // Register DOIs as soon as possible
-            parsedEntries.map(entry => entry.DOI).filter(Boolean).forEach(
-                entry => REGISTERED_DOIS.add(entry)
-            );
-
-            CITATION_WORKER.postMessage(parsedEntries);            
+            processParsedEntries(parsedEntries);            
         }
         catch (ex) {
             document.getElementById("error-message").innerText = 
@@ -157,6 +152,17 @@ FILE_INPUT.addEventListener("change", fileSelectedCallback)
 // functions
 
 console.debug("Data loaded, rendering known papers");
+
+function processParsedEntries(parsedEntries: any) {
+    PROGRESS_BAR.max = parsedEntries.length;
+
+    // Register DOIs as soon as possible
+    parsedEntries.map(entry => entry.DOI).filter(Boolean).forEach(
+        entry => REGISTERED_DOIS.add(entry)
+    );
+
+    CITATION_WORKER.postMessage(parsedEntries);
+}
 
 function workerCallback(message: MessageEvent<WorkerMessage>){
 
@@ -350,19 +356,23 @@ function minReferencesChange(ev: Event) {
 SLIDER.onchange = minReferencesChange;
 
 document.getElementById("warning-btn").onclick = () => {
-    document.getElementsByTagName("dialog")[0].show();
+    WARNINGS_DIALOG.show();
 };
 
 document.getElementById("close-warnings-btn").onclick = () => {
-    document.getElementsByTagName("dialog")[0].close();
+    WARNINGS_DIALOG.close();
 };
+
+document.getElementById("import-btn").onclick = () => {
+    IMPORT_DIALOG.show();
+}
 
 document.getElementById("test").onclick = function(){
     getRequestToken();
 }
 
-document.getElementById("load_zotero").onclick = function(){
-    zoteroLoadTest();
+document.getElementById("load_zotero").onclick = async function(){
+    processParsedEntries(await zoteroLoadTest());
 }
 
 if (localStorage.getItem("zotero_api_key")) {

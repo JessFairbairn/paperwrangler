@@ -94,7 +94,7 @@ async function getPaperInfoFromDoi(doi): Promise<Paper> {
 }
 
 
-async function findPaper(paperInfo): Promise<Paper> {
+async function findPaper(paperInfo: Data): Promise<Paper> {
     let url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${paperInfo.title}&fields=title,authors,externalIds`
     
     let resp = await fetchWithBackoff(url);
