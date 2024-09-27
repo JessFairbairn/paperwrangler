@@ -367,19 +367,23 @@ document.getElementById("import-btn").onclick = () => {
     IMPORT_DIALOG.show();
 }
 
-document.getElementById("test").onclick = function(){
+document.getElementById("authorise-zotero-btn").onclick = function(){
     getRequestToken();
 }
 
-const LOAD_ALL_ZOTERO_PAPERS = document.getElementById("load_zotero") as HTMLButtonElement;
-LOAD_ALL_ZOTERO_PAPERS.onclick = async function(){
-    LOAD_ALL_ZOTERO_PAPERS.disabled = true;
+const LOAD_ALL_ZOTERO_PAPERS_BTN = document.getElementById("load-zotero-btn") as HTMLButtonElement;
+LOAD_ALL_ZOTERO_PAPERS_BTN.onclick = async function(){
+    LOAD_ALL_ZOTERO_PAPERS_BTN.disabled = true;
     processParsedEntries(await getAllPapersInZotero());
 }
 
-if (localStorage.getItem("zotero_api_key")) {
-    (document.getElementById("load_zotero") as HTMLButtonElement).disabled = false;
+if ("zotero_username" in localStorage ) {
+    LOAD_ALL_ZOTERO_PAPERS_BTN.disabled = false;
+    Array.from(document.getElementsByClassName("zotero-username") as HTMLCollectionOf<HTMLSpanElement>).forEach(element => {
+        element.innerText = localStorage.getItem("zotero_username")
+    });
+    document.getElementById("zotero-login-info").style.display = "block";
 } else {
-    (document.getElementById("load_zotero") as HTMLButtonElement).disabled = true;
+    LOAD_ALL_ZOTERO_PAPERS_BTN.disabled = true;
 }
 

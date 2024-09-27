@@ -79,4 +79,16 @@ dialog {
     border:  1px black solid;
     border-radius: 4px;
     min-width: 25%;
+    text-align: center;
+}
+
+.dialog-close-form {
+    /* display: inline-block; */
+    text-align: left;
+}
+.zotero-login-info{
+    display:none;
+}
+.zotero-username{
+    font-weight: bold;
 }
