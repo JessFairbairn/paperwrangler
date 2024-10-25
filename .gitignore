@@ -4,7 +4,6 @@ node_modules
 *.bib
 *.ris
 dist/*.js
-!dist/zotero_callback.js
 dist/*.LICENSE.txt
 *.js.map
 dist/main.js.map

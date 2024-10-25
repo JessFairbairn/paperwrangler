@@ -1,4 +1,4 @@
-const API_DOMAIN = "http://127.0.0.1:5000"; // TODO: import this domain from the integration service
+const API_DOMAIN = process.env.API_ROOT;
 
 const urlParams = new URLSearchParams(window.location.search);
 const oauth_token = urlParams.get('oauth_token');

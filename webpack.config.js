@@ -6,7 +6,10 @@ const Dotenv = require('dotenv-webpack');
 module.exports = env => {
   console.log(env);
   return {
-  entry: './src/script.ts',
+  entry: {
+    'main':'./src/script.ts',
+    'zotero_callback': './src/zotero_callback.ts'
+  },
   module: {
     rules: [
       {
@@ -28,7 +31,7 @@ module.exports = env => {
     new Dotenv({path:`.env.${env.node_env}`}),
   ],
   output: {
-    filename: 'main.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
     clean: false
   },
