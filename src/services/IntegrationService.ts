@@ -2,7 +2,7 @@ import { ZoteroApiCreator, ZoteroApiPaper, ZoteroApiResponse } from '../classes/
 
 import { Data, Person } from 'csl-json';
 
-const API_DOMAIN = "http://127.0.0.1:5000";
+const API_DOMAIN = process.env.API_ROOT;
 
 export async function getRequestToken() {
     let resp;
