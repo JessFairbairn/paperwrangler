@@ -17,6 +17,7 @@
             <div id="controls">
                 <h1>Paper Wrangler</h1>
                 <p>See how your field has developed through a web of citations</p>
+                <button id="import-btn">Import from Zotero...</button>
                 <fieldset>
                     <legend>Select a Bibtex or RIS file</legend>
                     <input type="file" accept=".bib,.ris" id="fileInput"/>
@@ -35,10 +36,23 @@
                 <button id="warning-btn">Show Issues (<span class="warning-number">0</span>)</button>
                 <div id="vis-controls"/>
             </div>
-            <dialog >
-                <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
+            <dialog id="warnings-dialog">
+                <form method="dialog" class="dialog-close-form">
+                    <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
+                </form>
                 Warnings
                 <ul id="warning-list"></ul>
+            </dialog>
+
+            <dialog id="import-dialog">
+                <form method="dialog" class="dialog-close-form">
+                    <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
+                </form>
+                <div id="zotero-login-info">
+                    Paper Wrangler is connected to Zotero account "<span class="zotero-username"></span>"
+                </div>
+                <button id="authorise-zotero-btn">Authorise Zotero</button>
+                <button id="load-zotero-btn" disabled>Load All Items from Zotero Library</button>
             </dialog>
         </div>
     </body>
