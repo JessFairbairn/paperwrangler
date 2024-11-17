@@ -384,6 +384,7 @@ if ("zotero_username" in localStorage ) {
     });
     document.getElementById("zotero-login-info").style.display = "block";
 } else {
+    document.getElementById("zotero-login-info").style.display = "none";
     LOAD_ALL_ZOTERO_PAPERS_BTN.disabled = true;
 }
 
