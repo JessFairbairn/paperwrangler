@@ -17,14 +17,10 @@
             <div id="controls">
                 <h1>Paper Wrangler</h1>
                 <p>See how your field has developed through a web of citations</p>
-                <button id="import-btn">Import from Zotero...</button>
-                <fieldset>
-                    <legend>Select a Bibtex or RIS file</legend>
-                    <input type="file" accept=".bib,.ris" id="fileInput"/>
-                    <br/>
-                    <progress style="display: none;"></progress>
-                    <div id="error-message"></div>
-                </fieldset>
+                <button id="import-btn">Import references...</button>
+                
+                <progress style="display: none;"></progress>
+                <div id="error-message"></div>
                 <!-- </fieldset> -->
                 <!-- <hr/> -->
                 <fieldset>
@@ -48,11 +44,25 @@
                 <form method="dialog" class="dialog-close-form">
                     <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
                 </form>
-                <div id="zotero-login-info">
-                    Paper Wrangler is connected to Zotero account "<span class="zotero-username"></span>"
+                <div class="dialog-chunky-wrapper">
+                    <div>
+                        <h3>Load a file</h3>
+                        <label>
+                            Select a Bibtex or RIS file
+                            <input type="file" accept=".bib,.ris" id="fileInput"/>
+                        </label>
+                    </div>
+                    <div>
+                        <h3>Load from Zotero</h3>
+                        <div id="zotero-login-info">
+                            Paper Wrangler is connected to Zotero account "<span class="zotero-username"></span>"
+                        </div>
+                        <div>
+                            <button id="authorise-zotero-btn">Authorise Zotero</button>
+                            <button id="load-zotero-btn" disabled>Load All Items from Zotero Library</button>
+                        </div>
+                    </div>
                 </div>
-                <button id="authorise-zotero-btn">Authorise Zotero</button>
-                <button id="load-zotero-btn" disabled>Load All Items from Zotero Library</button>
             </dialog>
         </div>
     </body>
