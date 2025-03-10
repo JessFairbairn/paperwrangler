@@ -32,38 +32,39 @@
                 <button id="warning-btn">Show Issues (<span class="warning-number">0</span>)</button>
                 <div id="vis-controls"/>
             </div>
-            <dialog id="warnings-dialog">
-                <form method="dialog" class="dialog-close-form">
-                    <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
-                </form>
-                Warnings
-                <ul id="warning-list"></ul>
-            </dialog>
+            
+        </div>
+        <dialog id="warnings-dialog">
+            <form method="dialog" class="dialog-close-form">
+                <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
+            </form>
+            Warnings
+            <ul id="warning-list"></ul>
+        </dialog>
 
-            <dialog id="import-dialog">
-                <form method="dialog" class="dialog-close-form">
-                    <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
-                </form>
-                <div class="dialog-chunky-wrapper">
-                    <div>
-                        <h3>Load a file</h3>
-                        <label class="upload-area">
-                            <div>Select a Bibtex or RIS file</div>
-                            <input type="file" accept=".bib,.ris" id="fileInput"/>
-                        </label>
+        <dialog id="import-dialog">
+            <form method="dialog" class="dialog-close-form">
+                <button id="close-warnings-btn" aria-label="Close dialog" autofocus>X</button>
+            </form>
+            <div class="dialog-chunky-wrapper">
+                <div>
+                    <h3>Load a file</h3>
+                    <label class="upload-area">
+                        <div>Select a Bibtex or RIS file</div>
+                        <input type="file" accept=".bib,.ris" id="fileInput"/>
+                    </label>
+                </div>
+                <div>
+                    <h3>Load from Zotero</h3>
+                    <div id="zotero-login-info">
+                        Paper Wrangler is connected to Zotero account "<span class="zotero-username"></span>"
                     </div>
                     <div>
-                        <h3>Load from Zotero</h3>
-                        <div id="zotero-login-info">
-                            Paper Wrangler is connected to Zotero account "<span class="zotero-username"></span>"
-                        </div>
-                        <div>
-                            <button id="authorise-zotero-btn">Authorise Zotero</button>
-                            <button id="load-zotero-btn" disabled>Load All Items from Zotero Library</button>
-                        </div>
+                        <button id="authorise-zotero-btn">Authorise Zotero</button>
+                        <button id="load-zotero-btn" disabled>Load All Items from Zotero Library</button>
                     </div>
                 </div>
-            </dialog>
-        </div>
+            </div>
+        </dialog>
     </body>
 </html>

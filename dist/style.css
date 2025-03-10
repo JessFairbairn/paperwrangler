@@ -42,12 +42,16 @@ html, body {
     margin-top:0;
 }
 
-button, input::file-selector-button{
+button, input::file-selector-button {
     background-color: #2687ad;
     color: white;
     border:0;
     padding: 0.5em;
     border-radius: 5px;
+}
+
+button:hover, input::file-selector-button:hover {
+    background-color: #1c6582;
 }
 
 fieldset {
@@ -90,6 +94,8 @@ dialog {
     min-width: 25%;
     max-width: 90%;
     text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 dialog h3 {
@@ -123,6 +129,10 @@ dialog h3 {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+}
+
+.upload-area:hover {
+    background-color: #e8e8e8;
 }
 
 .upload-area input {
