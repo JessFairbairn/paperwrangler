@@ -41,6 +41,19 @@ html, body {
 #controls h1 {
     margin-top:0;
 }
+
+button, input::file-selector-button {
+    background-color: #2687ad;
+    color: white;
+    border:0;
+    padding: 0.5em;
+    border-radius: 5px;
+}
+
+button:hover, input::file-selector-button:hover {
+    background-color: #1c6582;
+}
+
 fieldset {
     margin-bottom: 1em;;
 }
@@ -79,16 +92,62 @@ dialog {
     border:  1px black solid;
     border-radius: 4px;
     min-width: 25%;
+    max-width: 90%;
     text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+dialog h3 {
+    margin-top: 0;
 }
 
 .dialog-close-form {
     /* display: inline-block; */
     text-align: left;
 }
-.zotero-login-info{
+
+.dialog-chunky-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.dialog-chunky-wrapper > * {
+    flex: 1 1 0;
+    min-width: 20em;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.dialog-chunky-wrapper > * > * {
+    margin: 0.5em;
+}
+
+.upload-area {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.upload-area:hover {
+    background-color: #e8e8e8;
+}
+
+.upload-area input {
+    flex-grow: 1;
+    align-content: center;
+    margin: auto;
+}
+
+.flex-separator {
+    flex-basis: 0;
+}
+
+.zotero-login-info {
     display:none;
 }
-.zotero-username{
+.zotero-username {
     font-weight: bold;
 }
