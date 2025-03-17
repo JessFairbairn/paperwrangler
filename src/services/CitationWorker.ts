@@ -6,6 +6,9 @@ import { Paper } from "../classes/SemanticScholarTypes"
 import { fetchWithBackoff } from '../fetchWithBackoff';
 import { filterBySecondArray } from '../filterBySecondArray';
 
+const DOI_BATCH_SIZE = 20;
+let doisToLoad: string[] = [];
+
 async function processArray(paperList: Data[]): Promise<void> {
     let numberReturned = 0;
 
@@ -50,7 +53,7 @@ async function processArray(paperList: Data[]): Promise<void> {
             postMessage({type:"results", body: [paperInfo], progress: numberReturned} as WorkerMessage);
         }        
         catch (ex) {
-            // assume it's a 429
+            // shouldn't be a 429
             postMessage({
                 type: "error",
                 body: "You appear to be rate limited, loading may be slow.",
@@ -62,6 +65,8 @@ async function processArray(paperList: Data[]): Promise<void> {
 }
 
 async function getPaperInfoFromDoi(doi): Promise<Paper> {
+    // TODO: I think this function is out of date, and only ever receives Semantic
+    //  scholar internal IDs
     let doiCode;
     if (doi.startsWith(10)) {
         doiCode = doi; 
