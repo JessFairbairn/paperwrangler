@@ -6,8 +6,8 @@ import { Paper } from "../classes/SemanticScholarTypes"
 import { fetchWithBackoff } from '../fetchWithBackoff';
 import { filterBySecondArray } from '../filterBySecondArray';
 
-const DOI_BATCH_SIZE = 20;
-let doisToLoad: string[] = [];
+const DOI_BATCH_SIZE = 5;
+let idsToLoads: string[] = [];
 
 async function processArray(paperList: Data[]): Promise<void> {
     let numberReturned = 0;
@@ -44,27 +44,37 @@ async function processArray(paperList: Data[]): Promise<void> {
     for (let entry of papersWithoutCodes) {
         numberReturned++;
         try {
-            let paperInfo = await findPaper(entry);
+            let paperId = await findPaperId(entry);
 
-            if (!paperInfo) {
+            if (!paperId) {
                 postWarning(`Could not identify info for "${entry.title}"`);
                 continue;
             }
-            postMessage({type:"results", body: [paperInfo], progress: numberReturned} as WorkerMessage);
+            idsToLoads.push(paperId);
+            // postMessage({type:"results", body: [paperId], progress: numberReturned} as WorkerMessage);
         }        
         catch (ex) {
             // shouldn't be a 429
             postMessage({
                 type: "error",
-                body: "You appear to be rate limited, loading may be slow.",
+                body: "An unhandled error occurred",
                 progress: numberReturned
             } as WorkerMessage);
         }
+
+        if (idsToLoads.length % DOI_BATCH_SIZE === 0) {
+            let results = await bulkRetrival(idsToLoads)
+            postMessage({type:"results", body: results, progress: numberReturned} as WorkerMessage);
+            idsToLoads = [];
+        }
     }
-    
+    if (idsToLoads.length) {
+        let results = await bulkRetrival(idsToLoads)
+        postMessage({type:"results", body: results, progress: numberReturned} as WorkerMessage);
+    }
 }
 
-async function getPaperInfoFromDoi(doi): Promise<Paper> {
+export async function getPaperInfoFromDoi(doi): Promise<Paper> {
     // TODO: I think this function is out of date, and only ever receives Semantic
     //  scholar internal IDs
     let doiCode;
@@ -84,6 +94,7 @@ async function getPaperInfoFromDoi(doi): Promise<Paper> {
     let resp = await fetchWithBackoff(`https://api.semanticscholar.org/v1/paper/${doiCode}?fields=externalIds`);
     if (resp.status >= 400) {
         //TODO: handle better
+        console.error(resp)
         return null;
     }
     let json = await resp.json() as Paper;
@@ -99,7 +110,7 @@ async function getPaperInfoFromDoi(doi): Promise<Paper> {
 }
 
 
-async function findPaper(paperInfo: Data): Promise<Paper> {
+async function findPaperId(paperInfo: Data): Promise<string> {
     let url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${paperInfo.title}&fields=title,authors,externalIds`
     
     let resp = await fetchWithBackoff(url);
@@ -113,7 +124,9 @@ async function findPaper(paperInfo: Data): Promise<Paper> {
         let authorName = paperInfo.author[0].given + " " + paperInfo.author[0].family;
         let authorName2 = paperInfo.author[0].given[0] + ". " + paperInfo.author[0].family;
         if (match.title.toLowerCase() === paperInfo.title.toLowerCase() && match.authors.some(author => [authorName,authorName2].includes(author.name))) {
-            return await getPaperInfoFromDoi(match.paperId);
+            // return await getPaperInfoFromDoi(match.paperId);
+            // idsToLoads.push(match.paperId);
+            return match.paperId;
         }
     }
     // None of the matches suggested by the API were close enough
