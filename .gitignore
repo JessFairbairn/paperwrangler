@@ -8,3 +8,5 @@ dist/*.LICENSE.txt
 *.js.map
 dist/main.js.map
 .env.development
+
+coverage

@@ -5,6 +5,7 @@
       "target": "ESNext",
       "module": "ESNext",
       "moduleResolution": "Bundler",
+      "esModuleInterop": true
     },
     "include": ["./src/**/*", "dist/zotero_callback.js"]
   }

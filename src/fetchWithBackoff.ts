@@ -1,6 +1,6 @@
 import { WorkerMessage } from "./classes/WorkerMessage";
 
-export async function fetchWithBackoff(resource: string | URL | Request, options: RequestInit = null, fuse = 0) {
+export async function fetchWithBackoff(resource: string | URL | Request, options: RequestInit = {}, fuse = 0) {
     try {
         return await fetch(resource, options);
     }
