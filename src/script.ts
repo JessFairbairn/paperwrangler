@@ -190,6 +190,10 @@ function renderResults(loadedPaperInfo: Array<Paper>) {
 
         // Add references
         let papers_this_references = paperInfo["references"];
+        if (!papers_this_references){
+            console.warn(`${paperInfo.title} is not open access and references are not available`);
+            papers_this_references = [];
+        }
         for (let referenced_paper of papers_this_references) {
             if (!referenced_paper.externalIds?.DOI ) {
                 continue;
